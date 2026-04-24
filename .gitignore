@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Env
+.env
+.env*.local
+
+# Debug / OS
+.DS_Store
+*.pem
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+# (migrations klasörünü tutuyoruz; istenirse prisma/migrations açıkça eklenir)
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel
+.vercel
+
+# IDE
+.idea/
+.vscode/

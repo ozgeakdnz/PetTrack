@@ -1,0 +1,13 @@
+---
+description: Backend — API route’ları, Prisma, PostgreSQL
+globs: backend/**/*
+alwaysApply: false
+---
+
+# Backend (`backend/`)
+
+- Route handler’lar: `backend/app/api/**/route.ts`. Yanıt için `NextResponse.json` / uygun HTTP status kullan.
+- Prisma: `import { prisma } from "@/lib/prisma"` — şema `backend/prisma/schema.prisma`; generate çıktısı `backend/lib/generated/` (elle düzenleme).
+- Script’ler: `npm run prisma:generate` vb. workspace üzerinden kökten (`npm run prisma:generate`) veya `backend` dizininde çalıştır.
+- Yüklemeler: `app/api/uploads` dosyaları `backend/public/uploads/` altına yazar; dönen `fileUrl` göreli olabilir — istemci tam URL için `NEXT_PUBLIC_API_URL` ile birleştirir.
+- Yeni endpoint: PRD `Teknik PRD_ Pet Track iOS.md` §4 ile hizala; mevcut takvim/symptom/nutrition/pets yapısına uyumlu tut.

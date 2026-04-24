@@ -1,0 +1,14 @@
+---
+description: PetTrack monorepo — kök bağlam, portlar, ortam
+alwaysApply: true
+---
+
+# PetTrack workspace
+
+- **npm workspaces:** `frontend/` (UI, Next.js, port **1570**) ve `backend/` (Route Handlers + Prisma, port **1571**). Kökten: `npm run dev` her ikisini birden çalıştırır.
+- **API çağrıları:** Yalnız `frontend/` içinde; asla göreli `/api/...` ile doğrudan fetch yapma. Her zaman `import { apiUrl } from "@/lib/api"` ve `fetch(apiUrl("/api/..."))`. Taban URL: `NEXT_PUBLIC_API_URL` (varsayılan `http://localhost:1571`).
+- **Veri katmanı:** Prisma ve `DATABASE_URL` yalnız **backend** paketinde. Frontend’e Prisma client ekleme.
+- **CORS:** `backend/middleware.ts` — geliştirmede `FRONTEND_ORIGIN` (varsayılan `http://localhost:1570`).
+- **Üretim derlemesi:** `npm run build` sırasında backend için `DATABASE_URL` set edilmeli (`backend/lib/prisma.ts` import anında doğrular).
+- **Next.js:** Bu projede Next sürümü eğitim verisinden farklı olabilir; şüphede `node_modules/next/dist/docs/` altındaki güncel dokümana bak; depreasyon uyarılarına uy.
+- **İlgili kurallar:** UI için `design-system.mdc`, `design-system-enforce.mdc`, `react.mdc`, `responsive.mdc`; API için `next-route-handlers.mdc`. Uzun referans: `.cursor/design-system.md`.

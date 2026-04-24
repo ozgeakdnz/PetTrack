@@ -1,0 +1,14 @@
+---
+description: React 19 + Next.js App Router — istemci bileşenleri
+globs: frontend/**/*.tsx
+alwaysApply: false
+---
+
+# React / Next (frontend)
+
+- **İstemci:** etkileşim, state veya tarayıcı API’si gerekiyorsa dosya başında tam satır: `"use client";` (başında boşluk yok).
+- **Sunucu bileşeni varsayılan:** gereksiz `"use client"` ekleme; veri çekme mümkünse Server Component + `apiUrl` dikkatli kullan (çoklu ortamda URL env’den).
+- **Hook kuralları:** `useEffect` / `useMemo` / `useCallback` bağımlılık dizilerini eksiksiz tut; boş effect ile “lint susturma” yapma.
+- **Liste ve key:** `key` olarak stabil `id` kullan; index yalnızca statik liste için.
+- **Link:** iç rotada `next/link` `<Link href="...">`; harici API veya indirme için `<a>` + `apiUrl` uygun.
+- **Hata UI:** kullanıcıya `error` state ile kısa Türkçe mesaj; teknik stack trace’i UI’da gösterme.

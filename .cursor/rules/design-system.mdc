@@ -1,0 +1,35 @@
+---
+description: PetTrack UI — renk, tipografi, yüzey, köşe (Tailwind)
+globs: frontend/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Tasarım sistemi (PetTrack / Vet-Health)
+
+Bu projede yeni ekran ve bileşenler **mevcut sayfalarla aynı dilde** kalmalıdır.
+
+## Renk
+
+- **Arka plan:** `bg-slate-100` (ana gövde), kart ve header için `bg-white`.
+- **Kenarlık:** `border-slate-200`; metin `text-slate-700` / `text-slate-900`; ikincil `text-slate-500`.
+- **Marka / aksiyon:** teal ailesi — `text-teal-700`, `bg-teal-600`, `hover:bg-teal-700`, vurgu gölgeleri `shadow-teal-500/25` gibi mevcut kullanımlara uy.
+- **Durum:** başarı `emerald`, uyarı `amber`, hata `rose` — sayfalardaki özet kartlarıyla tutarlı kullan.
+
+## Yüzey ve derinlik
+
+- Kartlar: `rounded-[2rem]` veya `rounded-3xl`, ince `border border-slate-200`, hafif gölge (`shadow-sm` veya mevcut uzun gölge sınıfları).
+- Bölüm başlıkları: `text-xl` / `text-2xl` / `text-3xl` + `font-semibold` hiyerarşisine uy.
+
+## Tipografi
+
+- Gövde: `text-sm` / `text-base`; form etiketleri `text-sm font-medium text-slate-700`.
+- Layout’ta tanımlı **Geist** font değişkenleri (`globals.css` `@theme`) korunmalı; rastgele yeni web font ekleme.
+
+## İkonlar
+
+- **lucide-react** tercih; boyut genelde `h-4 w-4` / `h-5 w-5` / `h-16 w-16` (hero) ile hizalı olsun.
+
+## Kaçınılacaklar
+
+- Tailwind dışı büyük CSS modülleri veya her bileşende sıfırdan renk paleti üretme.
+- `AppShell` dışında ikinci bir tam ekran navigasyon katmanı ekleme (önce mevcut sidebar/mobil menüyü genişlet).

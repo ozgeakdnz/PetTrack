@@ -1,0 +1,12 @@
+---
+description: Mobil ve tablet — layout, dokunma, taşma
+globs: frontend/**/*.{tsx
+alwaysApply: false
+---
+# Duyarlı (responsive) davranış
+
+- **Kırılım:** projede `md:` (768px) ana masaüstü eşiği — sidebar `md:flex`, mobil header `md:hidden` ile uyumlu kal.
+- **Taşma:** ana kolon `min-w-0`; uzun tablo/liste yatay kaydırma gerekiyorsa kontrollü `overflow-x-auto` + içeride `min-w` netliği.
+- **Dokunma hedefi:** mobilde buton ve liste satırları en az ~44px yükseklik; `AppShell` header’daki menü butonu (`h-10 w-10`) referans.
+- **Tipografi ölçek:** mobilde `text-3xl` hero başlıkları taşırsa `text-2xl sm:text-3xl` gibi kademeli kullan.
+- **Chatbox / sabit UI:** `PatiDostuChatbox` alt köşede; yeni sabit overlay eklemeden önce mevcut z-index (`z-30` header) ile çakışmayı kontrol et.
