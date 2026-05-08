@@ -27,6 +27,10 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# Flutter (mobile/)
+mobile/.dart_tool/
+mobile/build/
+
 # IDE
 .idea/
 .vscode/
