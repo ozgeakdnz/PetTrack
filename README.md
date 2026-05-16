@@ -64,4 +64,4 @@ npm run prisma:studio
 - Tailwind CSS 4, Lucide-React (frontend)
 - Prisma ORM, `pg` (backend)
 
-Detaylı yürütme adımları için kökteki `plan.md` dosyasına bakın.
+Detaylı yürütme adımları için kökteki `plan.md` dosyasına bakabilirsiniz.
