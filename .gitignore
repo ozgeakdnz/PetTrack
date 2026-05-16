@@ -31,6 +31,12 @@ yarn-error.log*
 mobile/.dart_tool/
 mobile/build/
 
+# Python (backend-py/)
+backend-py/.venv/
+backend-py/__pycache__/
+backend-py/**/__pycache__/
+backend-py/.env
+
 # IDE
 .idea/
 .vscode/

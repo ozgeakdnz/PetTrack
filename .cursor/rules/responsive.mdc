@@ -1,6 +1,5 @@
 ---
 description: Mobil ve tablet — layout, dokunma, taşma
-globs: frontend/**/*.{tsx
 alwaysApply: false
 ---
 # Duyarlı (responsive) davranış
