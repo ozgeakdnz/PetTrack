@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:1570";
+const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:1575";
 
 export function middleware(request: NextRequest) {
   if (request.method === "OPTIONS") {

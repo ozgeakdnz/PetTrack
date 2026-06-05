@@ -30,7 +30,7 @@ export function AppSidebar() {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Pet Care
           </p>
-          <h1 className="text-lg font-semibold text-slate-900">Vet-Health</h1>
+          <h1 className="text-lg font-semibold text-slate-900">PetTrack</h1>
         </div>
       </div>
 

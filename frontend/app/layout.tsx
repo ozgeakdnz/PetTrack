@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vet-Health",
+  title: "PetTrack",
   description: "Evcil hayvan sağlık takip uygulaması",
 };
 

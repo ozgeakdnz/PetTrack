@@ -40,7 +40,7 @@ export function AppShell({ children }: AppShellProps) {
           </button>
           <div className="ml-3 flex items-center gap-2">
             <ShieldPlus className="h-5 w-5 text-teal-700" />
-            <span className="text-sm font-semibold text-slate-900">Vet-Health</span>
+            <span className="text-sm font-semibold text-slate-900">PetTrack</span>
           </div>
         </header>
 
@@ -83,7 +83,7 @@ function SidebarContent({ activePath, onNavigate }: SidebarContentProps) {
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Pet Care</p>
-          <h1 className="text-lg font-semibold text-slate-900">Vet-Health</h1>
+          <h1 className="text-lg font-semibold text-slate-900">PetTrack</h1>
         </div>
       </div>
 

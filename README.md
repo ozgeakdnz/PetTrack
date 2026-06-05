@@ -16,7 +16,7 @@ Monorepo: **`frontend/`** (Next.js + Tailwind + arayüz) ve **`backend/`** (Next
 **`frontend/.env.local`** (isteğe bağlı; varsayılanlar yerel geliştirme içindir):
 
 - `NEXT_PUBLIC_API_URL` — API tabanı (varsayılan: `http://localhost:1571`)
-- Backend CORS için **`backend/.env`** içinde `FRONTEND_ORIGIN=http://localhost:1570` (varsayılan zaten bu)
+- Backend CORS için **`backend/.env`** içinde `FRONTEND_ORIGIN=http://localhost:1575` (varsayılan zaten bu)
 
 ### Kurulum
 
@@ -25,9 +25,31 @@ npm install
 npm run prisma:generate
 ```
 
-### Geliştirme
+### Veritabanı
 
-İki servisi birlikte çalıştırır (`backend` :1571, `frontend` :1570):
+**Seçenek A — Yerel PostgreSQL (Homebrew vb.)**
+
+```bash
+# macOS: genelde kullanıcı adınızla bağlanır
+createdb pettrack
+cp backend/.env.example backend/.env   # DATABASE_URL satırını düzenleyin
+npm run prisma:migrate
+```
+
+**Seçenek B — Docker Compose**
+
+```bash
+docker compose up -d
+# backend/.env → DATABASE_URL="postgresql://pettrack:pettrack@localhost:5433/pettrack"
+npm run prisma:migrate
+```
+
+Şema değişikliklerinden sonra migration uygulayın. Tabloları görmek için: `npm run prisma:studio`
+
+**Not:** `backend/.env` içindeki `DATABASE_URL` değiştiyse backend sürecini yeniden başlatın (`npm run dev`).
+
+
+İki servisi birlikte çalıştırır (`backend` :1571, `frontend` :1575):
 
 ```bash
 npm run dev
@@ -40,7 +62,7 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-Arayüz: [http://localhost:1570](http://localhost:1570) — API: [http://localhost:1571/api](http://localhost:1571/api)
+Arayüz: [http://localhost:1575](http://localhost:1575) — API: [http://localhost:1571/api](http://localhost:1571/api)
 
 ### Üretim derlemesi
 

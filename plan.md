@@ -16,7 +16,7 @@ Bu belge, `Teknik PRD_ Pet Track iOS.md` içindeki **Faz 1 / MVP** kapsamı ve t
 | Veri | PostgreSQL + Prisma; `ownerId` ile basit sahiplik (MVP) |
 | Dağıtım (PRD) | Vercel (API) + Supabase (DB); TestFlight (iOS) |
 
-**Not:** Repo **npm workspaces** monorepo: `backend/` (API + Prisma, varsayılan port **1571**) ve `frontend/` (UI, port **1570**). Kök `npm run dev` her iki paketi birlikte çalıştırır. Arayüz, `frontend/lib/api.ts` üzerinden `NEXT_PUBLIC_API_URL` ile API’ye bağlanır; CORS `backend/middleware.ts` ile ayarlanır.
+**Not:** Repo **npm workspaces** monorepo: `backend/` (API + Prisma, varsayılan port **1571**) ve `frontend/` (UI, port **1575**). Kök `npm run dev` her iki paketi birlikte çalıştırır. Arayüz, `frontend/lib/api.ts` üzerinden `NEXT_PUBLIC_API_URL` ile API’ye bağlanır; CORS `backend/middleware.ts` ile ayarlanır.
 
 ---
 
@@ -102,7 +102,7 @@ Her adımda “Bitti sayılır” kriteri kısaca yazılmıştır.
 
 ### Adım 2 — Frontend kurulumu (ayrı dizin)
 
-- [x] `frontend/` paketi: sayfalar, `components/`, `lib/api.ts`, `NEXT_PUBLIC_API_URL`, port **1570**.
+- [x] `frontend/` paketi: sayfalar, `components/`, `lib/api.ts`, `NEXT_PUBLIC_API_URL`, port **1575**.
 - [ ] PRD §5 ekranları ile mevcut sayfaları eşleştir; eksik ekranları backlog’a yaz.
 - **Bitti:** Frontend API’ye CORS ile bağlanır; ekran eşlemesi yazılı.
 

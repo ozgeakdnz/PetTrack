@@ -15,8 +15,8 @@
 | **AI (Pati Dostu)** | Hibrit: kural tabanlı `buildReply` + isteğe bağlı **Google Gemini** (`GEMINI_API_KEY`, model `gemini-1.5-flash`); yoksa yalnız kurallar |
 | **Para birimi** | Uygulanmıyor (sağlık takibi; fiyatlandırma MVP dışı) |
 | **Dil** | Arayüz ve API hata mesajları Türkçe öncelikli |
-| **Monorepo** | Kök `npm` workspaces: `frontend` (port **1570**), `backend` (port **1571**) |
-| **CORS** | `backend/middleware.ts` — `FRONTEND_ORIGIN` (varsayılan `http://localhost:1570`) |
+| **Monorepo** | Kök `npm` workspaces: `frontend` (port **1575**), `backend` (port **1571**) |
+| **CORS** | `backend/middleware.ts` — `FRONTEND_ORIGIN` (varsayılan `http://localhost:1575`) |
 
 ---
 

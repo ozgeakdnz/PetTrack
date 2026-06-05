@@ -9,7 +9,7 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "1572"))
 
 _default_origins = [
-    os.getenv("FRONTEND_ORIGIN", "http://localhost:1570"),
+    os.getenv("FRONTEND_ORIGIN", "http://localhost:1575"),
     os.getenv("MOBILE_ORIGIN", "http://localhost"),
 ]
 CORS_ORIGINS = [

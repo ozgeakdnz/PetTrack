@@ -13,7 +13,9 @@
     "prisma:generate": "npm run prisma:generate -w backend",
     "prisma:migrate": "npm run prisma:migrate -w backend",
     "prisma:push": "npm run prisma:push -w backend",
-    "prisma:studio": "npm run prisma:studio -w backend"
+    "prisma:studio": "npm run prisma:studio -w backend",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
