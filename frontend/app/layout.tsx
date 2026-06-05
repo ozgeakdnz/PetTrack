@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { PatiDostuChatbox } from "@/components/pati-dostu-chatbox";
+import { ActivePetProvider } from "@/lib/active-pet-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full text-slate-900">
-        <AppShell>{children}</AppShell>
+        <ActivePetProvider>
+          <AppShell>{children}</AppShell>
+        </ActivePetProvider>
         <PatiDostuChatbox />
       </body>
     </html>

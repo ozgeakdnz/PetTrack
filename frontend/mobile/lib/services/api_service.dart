@@ -72,6 +72,14 @@ class ApiService {
     return Pet.fromJson(data['pet'] as Map<String, dynamic>);
   }
 
+  Future<void> deletePet(String id) async {
+    final res = await http.delete(Uri.parse(ApiConfig.nextApi('/api/pets/$id')));
+    final data = _decode(res);
+    if (res.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Profil silinemedi');
+    }
+  }
+
   Future<String> uploadImage(List<int> bytes, String filename) async {
     final req = http.MultipartRequest('POST', Uri.parse(ApiConfig.nextApi('/api/uploads')));
     req.files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename));
@@ -242,20 +250,22 @@ class ApiService {
     return NutritionItem.fromJson(data['item'] as Map<String, dynamic>);
   }
 
-  Future<ChatMeta> getChatMeta() async {
-    final res = await http.get(Uri.parse(ApiConfig.nextApi('/api/chat')));
+  Future<ChatMeta> getChatMeta({String? petId}) async {
+    final query = petId != null && petId.isNotEmpty ? '?petId=${Uri.encodeQueryComponent(petId)}' : '';
+    final res = await http.get(Uri.parse(ApiConfig.nextApi('/api/chat$query')));
     final data = _decode(res);
     _throwIfError(res, data, 'Asistan bilgisi alınamadı');
     return ChatMeta.fromJson(data);
   }
 
-  Future<String> chat(String message, List<ChatMessage> history) async {
+  Future<String> chat(String message, List<ChatMessage> history, {String? petId}) async {
     final res = await http.post(
       Uri.parse(ApiConfig.nextApi('/api/chat')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'message': message,
         'history': history.map((m) => m.toJson()).toList(),
+        if (petId != null && petId.isNotEmpty) 'petId': petId,
       }),
     );
     final data = _decode(res);

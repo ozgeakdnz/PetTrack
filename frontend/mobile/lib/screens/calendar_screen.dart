@@ -106,7 +106,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next == 'COMPLETED' ? 'Tamamlandı olarak işaretlendi' : 'Yaklaşan olarak işaretlendi')),
+          SnackBar(
+            content: Text(
+              next == 'COMPLETED'
+                  ? 'Hatırlatıcı tamamlandı olarak işaretlendi.'
+                  : 'Hatırlatıcı bekliyor durumuna alındı.',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -150,7 +156,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ],
                   badge: r.isCompleted ? _Badge.completed() : _Badge.upcoming(),
                   muted: r.isCompleted,
-                  onTap: () => _toggleReminder(r),
+                  isCompleted: r.isCompleted,
+                  onStatusToggle: () => _toggleReminder(r),
                 ),
               )
               .toList(),
@@ -273,7 +280,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                     badge: e.isCompleted ? _Badge.completed() : _Badge.upcoming(),
                     muted: e.isCompleted,
-                    onTap: () => _toggleReminder(e),
+                    isCompleted: e.isCompleted,
+                    onStatusToggle: () => _toggleReminder(e),
                   ),
                 ),
               ],
@@ -319,7 +327,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ],
                         badge: r.isCompleted ? _Badge.completed() : _Badge.upcoming(),
                         muted: r.isCompleted,
-                        onTap: () => _toggleReminder(r),
+                        isCompleted: r.isCompleted,
+                        onStatusToggle: () => _toggleReminder(r),
                       ),
                     ),
               const SizedBox(height: 14),
@@ -533,7 +542,8 @@ class _ReminderCard extends StatelessWidget {
     required this.metaLines,
     required this.badge,
     this.muted = false,
-    this.onTap,
+    required this.isCompleted,
+    this.onStatusToggle,
   });
 
   final Color accent;
@@ -543,7 +553,8 @@ class _ReminderCard extends StatelessWidget {
   final List<_MetaLine> metaLines;
   final _Badge badge;
   final bool muted;
-  final VoidCallback? onTap;
+  final bool isCompleted;
+  final VoidCallback? onStatusToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -555,21 +566,18 @@ class _ReminderCard extends StatelessWidget {
           color: AppColors.cardWhite,
           borderRadius: BorderRadius.circular(20),
           elevation: 0,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
@@ -612,20 +620,45 @@ class _ReminderCard extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: badge.bg,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    badge.label,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: badge.fg,
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: badge.bg,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        badge.label,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: badge.fg,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    if (onStatusToggle != null) ...[
+                                      const SizedBox(height: 8),
+                                      OutlinedButton(
+                                        onPressed: onStatusToggle,
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          side: BorderSide(color: AppColors.borderSoft),
+                                        ),
+                                        child: Text(
+                                          isCompleted ? 'Bekliyor Yap' : 'Tamamlandı Yap',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),
@@ -666,11 +699,10 @@ class _ReminderCard extends StatelessWidget {
                 ),
               ),
             ],
-              ),
-            ),
           ),
         ),
       ),
+    ),
     );
   }
 }

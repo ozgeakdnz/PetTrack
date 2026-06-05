@@ -1,8 +1,10 @@
 "use client";
 
 import { apiUrl } from "@/lib/api";
+import { useActivePet } from "@/lib/active-pet-context";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, PlusCircle, TriangleAlert } from "lucide-react";
+import { ActivePetAvatar } from "@/components/active-pet-avatar";
 
 type Pet = { id: string; name: string };
 type SymptomItem = {
@@ -61,8 +63,8 @@ const seviyeStilleri = {
 } as const;
 
 export default function SymptomsPage() {
+  const { activePetId, setActivePetId } = useActivePet();
   const [pets, setPets] = useState<Pet[]>([]);
-  const [selectedPetId, setSelectedPetId] = useState("");
   const [items, setItems] = useState<SymptomItem[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -78,6 +80,8 @@ export default function SymptomsPage() {
     severity: "LOW" as SymptomItem["severity"],
     description: "",
   });
+
+  const selectedPetId = activePetId ?? "";
 
   const loadLogs = useCallback(async (petId: string, startOffset: number, append: boolean) => {
     const res = await fetch(apiUrl(`/api/symptoms?petId=${petId}&limit=5&offset=${startOffset}`), {
@@ -107,8 +111,11 @@ export default function SymptomsPage() {
       const allPets = petsData.pets ?? [];
       setPets(allPets);
 
-      const firstPetId = allPets[0]?.id ?? "";
-      setSelectedPetId(firstPetId);
+      const firstPetId =
+        activePetId && allPets.some((pet) => pet.id === activePetId)
+          ? activePetId
+          : (allPets[0]?.id ?? "");
+      if (firstPetId) setActivePetId(firstPetId);
 
       if (firstPetId) {
         await loadLogs(firstPetId, 0, false);
@@ -122,14 +129,14 @@ export default function SymptomsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [loadLogs]);
+  }, [loadLogs, activePetId, setActivePetId]);
 
   useEffect(() => {
     void loadPetsAndInitialLogs();
   }, [loadPetsAndInitialLogs]);
 
   async function handlePetChange(petId: string) {
-    setSelectedPetId(petId);
+    setActivePetId(petId);
     setError(null);
     setNotice(null);
     if (!petId) return;
@@ -207,11 +214,14 @@ export default function SymptomsPage() {
 
   return (
     <section className="mx-auto w-full max-w-6xl">
-      <header>
-        <h2 className="text-4xl font-bold tracking-tight text-slate-900">Belirti Günlüğü</h2>
-        <p className="mt-3 max-w-2xl text-sm text-slate-600">
-          Pati dostunuzun sağlık durumunu düzenli olarak takip ederek veteriner hekiminize en doğru bilgiyi sunabilirsiniz.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-4xl font-bold tracking-tight text-slate-900">Belirti Günlüğü</h2>
+          <p className="mt-3 max-w-2xl text-sm text-slate-600">
+            Pati dostunuzun sağlık durumunu düzenli olarak takip ederek veteriner hekiminize en doğru bilgiyi sunabilirsiniz.
+          </p>
+        </div>
+        <ActivePetAvatar className="mt-1" />
       </header>
 
       <div className="mt-8 grid gap-8 xl:grid-cols-[340px_1fr]">

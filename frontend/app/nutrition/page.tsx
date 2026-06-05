@@ -1,8 +1,10 @@
 "use client";
 
 import { apiUrl } from "@/lib/api";
+import { useActivePet } from "@/lib/active-pet-context";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bolt, Info, Pencil, PlusCircle, Salad, Sun, UtensilsCrossed } from "lucide-react";
+import { ActivePetAvatar } from "@/components/active-pet-avatar";
 
 type Pet = {
   id: string;
@@ -36,8 +38,8 @@ function getIconByTime(feedTime: string) {
 }
 
 export default function NutritionPage() {
+  const { activePetId, setActivePetId } = useActivePet();
   const [pets, setPets] = useState<Pet[]>([]);
-  const [selectedPetId, setSelectedPetId] = useState<string>("");
   const [items, setItems] = useState<NutritionItem[]>([]);
   const [focus, setFocus] = useState("Kilo Koruma");
   const [mealCount, setMealCount] = useState(3);
@@ -53,9 +55,11 @@ export default function NutritionPage() {
   });
 
   const selectedPet = useMemo(
-    () => pets.find((pet) => pet.id === selectedPetId) ?? null,
-    [pets, selectedPetId],
+    () => pets.find((pet) => pet.id === activePetId) ?? null,
+    [pets, activePetId],
   );
+
+  const selectedPetId = activePetId ?? "";
 
   const fetchMeals = useCallback(async (petId: string) => {
     const res = await fetch(apiUrl(`/api/nutrition?petId=${petId}`), { cache: "no-store" });
@@ -72,20 +76,23 @@ export default function NutritionPage() {
       if (!petsRes.ok) throw new Error(petsData.error ?? "Profil verileri alınamadı.");
       const list = petsData.pets ?? [];
       setPets(list);
-      const firstPetId = list[0]?.id ?? "";
-      setSelectedPetId(firstPetId);
+      const firstPetId =
+        activePetId && list.some((pet) => pet.id === activePetId)
+          ? activePetId
+          : (list[0]?.id ?? "");
+      if (firstPetId) setActivePetId(firstPetId);
       if (firstPetId) await fetchMeals(firstPetId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Veriler alınamadı.");
     }
-  }, [fetchMeals]);
+  }, [fetchMeals, activePetId, setActivePetId]);
 
   useEffect(() => {
     void loadInitial();
   }, [loadInitial]);
 
   async function handlePetChange(petId: string) {
-    setSelectedPetId(petId);
+    setActivePetId(petId);
     setError(null);
     setNotice(null);
     if (!petId) {
@@ -187,20 +194,23 @@ export default function NutritionPage() {
             Pati dostunuzun sağlıklı gelişimi için günlük kalori ve öğün planlamasını buradan yönetin.
           </p>
         </div>
-        <div className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white p-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Aktif Profil</p>
-          <select
-            value={selectedPetId}
-            onChange={(e) => void handlePetChange(e.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none ring-teal-500 transition focus:ring-2"
-          >
-            {pets.length === 0 ? <option value="">Profil bulunamadı</option> : null}
-            {pets.map((pet) => (
-              <option key={pet.id} value={pet.id}>
-                {pet.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex w-full max-w-sm items-start gap-3 lg:w-auto">
+          <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Aktif Profil</p>
+            <select
+              value={selectedPetId}
+              onChange={(e) => void handlePetChange(e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none ring-teal-500 transition focus:ring-2"
+            >
+              {pets.length === 0 ? <option value="">Profil bulunamadı</option> : null}
+              {pets.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <ActivePetAvatar className="mt-3 shrink-0" />
         </div>
       </header>
 

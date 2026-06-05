@@ -27,6 +27,7 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
   bool _saving = false;
 
   String _symptomType = 'İştahsızlık';
+  String _severity = 'LOW';
   final _descCtrl = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   List<VaccinationEvent> _reminders = [];
@@ -34,10 +35,11 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
   String get _dateLabel => DateFormat('dd/MM/yyyy').format(_selectedDate);
 
   static const _symptomOptions = [
-    ('İştahsızlık', 'MEDIUM'),
-    ('Kusma', 'HIGH'),
-    ('Halsizlik', 'MEDIUM'),
-    ('Normal Durum', 'LOW'),
+    'Kusma',
+    'İştahsızlık',
+    'Halsizlik',
+    'Öksürük',
+    'Normal Durum',
   ];
 
   @override
@@ -130,13 +132,12 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
       return;
     }
 
-    final severity = _symptomOptions.firstWhere((e) => e.$1 == _symptomType).$2;
     setState(() => _saving = true);
     try {
       await ApiService.instance.createSymptom(
         petId: _pet!.id,
         symptom: _symptomType,
-        severity: severity,
+        severity: _severity,
         description: _descCtrl.text.trim(),
         createdAt: _selectedDate,
       );
@@ -155,6 +156,17 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  String _severityLabel(String s) {
+    switch (s) {
+      case 'HIGH':
+        return 'Yüksek';
+      case 'MEDIUM':
+        return 'Orta';
+      default:
+        return 'Düşük';
     }
   }
 
@@ -194,7 +206,6 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             PtHeader(
-              showProfileAvatar: true,
               onNotificationsTap: () => showNotificationsSheet(context, _reminders),
             ),
             PetSwitcherBar(
@@ -259,9 +270,49 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
                           suffixIcon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary.withValues(alpha: 0.95)),
                         ),
                         items: _symptomOptions
-                            .map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$1)))
+                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                             .toList(),
                         onChanged: (v) => setState(() => _symptomType = v ?? _symptomType),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _Labeled(
+                      'Şiddet Seviyesi',
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SeverityChip(
+                              label: 'Düşük',
+                              selected: _severity == 'LOW',
+                              border: const Color(0xFFA7F3D0),
+                              background: const Color(0xFFD1FAE5),
+                              foreground: const Color(0xFF047857),
+                              onTap: () => setState(() => _severity = 'LOW'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SeverityChip(
+                              label: 'Orta',
+                              selected: _severity == 'MEDIUM',
+                              border: const Color(0xFFFDE68A),
+                              background: const Color(0xFFFFFBEB),
+                              foreground: const Color(0xFFB45309),
+                              onTap: () => setState(() => _severity = 'MEDIUM'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SeverityChip(
+                              label: 'Yüksek',
+                              selected: _severity == 'HIGH',
+                              border: const Color(0xFFFECACA),
+                              background: const Color(0xFFFEF2F2),
+                              foreground: const Color(0xFFB91C1C),
+                              onTap: () => setState(() => _severity = 'HIGH'),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -303,6 +354,7 @@ class _HealthDiaryScreenState extends State<HealthDiaryScreen> {
                 (log) => _TimelineEntry(
                   severity: _mapSeverity(log.severity),
                   title: log.symptom,
+                  severityLabel: _severityLabel(log.severity),
                   timeBadge: _timeBadge(log.createdAt.toLocal()),
                   body: log.description ?? '—',
                 ),
@@ -336,16 +388,64 @@ class _Labeled extends StatelessWidget {
 
 enum _Severity { urgent, warning, ok }
 
+class _SeverityChip extends StatelessWidget {
+  const _SeverityChip({
+    required this.label,
+    required this.selected,
+    required this.border,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final Color border;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? background : AppColors.cardWhite,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? border : AppColors.borderSoft, width: selected ? 1.5 : 1),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: selected ? foreground : AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TimelineEntry extends StatelessWidget {
   const _TimelineEntry({
     required this.severity,
     required this.title,
+    required this.severityLabel,
     required this.timeBadge,
     required this.body,
   });
 
   final _Severity severity;
   final String title;
+  final String severityLabel;
   final String timeBadge;
   final String body;
 
@@ -436,6 +536,22 @@ class _TimelineEntry extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F2F4),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  severityLabel,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.95),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

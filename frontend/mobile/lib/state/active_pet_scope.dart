@@ -75,6 +75,15 @@ class ActivePetScope extends ChangeNotifier {
     upsertPet(pet);
     return pet;
   }
+
+  Future<void> removePet(String petId) async {
+    await ApiService.instance.deletePet(petId);
+    _pets = _pets.where((p) => p.id != petId).toList();
+    if (_activePetId == petId) {
+      _activePetId = _pets.isNotEmpty ? _pets.first.id : null;
+    }
+    notifyListeners();
+  }
 }
 
 class ActivePetScopeWidget extends StatefulWidget {

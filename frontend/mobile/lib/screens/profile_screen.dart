@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-import '../config/api_config.dart';
 import '../models/pet_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import '../state/active_pet_scope.dart';
+import '../utils/pet_avatar.dart';
 import '../widgets/pet_switcher_bar.dart';
 import '../widgets/pt_action_sheets.dart';
 import '../widgets/pt_gradient_button.dart';
@@ -92,13 +92,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _load() => _scope!.refresh();
 
   ImageProvider? get _avatarImage {
-    final url = _pet?.imageUrl;
-    if (url == null || url.isEmpty) {
-      return const AssetImage('assets/images/pamuk_avatar.png');
-    }
-    if (url.startsWith('http')) return NetworkImage(url);
-    return NetworkImage('${ApiConfig.nextApiBase}$url');
+    return PetAvatar.resolve(
+      species: _species,
+      imageUrl: PetAvatar.hasCustomPhoto(_pet?.imageUrl) ? _pet!.imageUrl : null,
+    );
   }
+
+  bool get _hasCustomPhoto => PetAvatar.hasCustomPhoto(_pet?.imageUrl);
 
   Future<void> _pickImage() async {
     if (_pet == null) return;
@@ -145,6 +145,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _deletePet() async {
+    if (_pet == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Profili Sil'),
+        content: Text(
+          '${_pet!.name} profilini silmek istediğinize emin misiniz? '
+          'Takvim, sağlık ve beslenme kayıtları da silinir.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.urgent),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _saving = true);
+    try {
+      await _scope!.removePet(_pet!.id);
+      _formPetId = null;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil silindi')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _save() async {
     if (_pet == null) return;
     setState(() => _saving = true);
@@ -161,6 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'weight': weight,
         'breed': _breedCtrl.text.trim(),
         if (_birthCtrl.text.isNotEmpty) 'birthDate': _parseBirth(_birthCtrl.text),
+        if (!_hasCustomPhoto && _species != _pet!.species) 'imageUrl': null,
       });
       _scope!.upsertPet(updated);
       _syncForm(force: true);
@@ -248,7 +292,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               birthCtrl: _birthCtrl,
                               species: _species,
                               gender: _gender,
-                              onSpeciesChanged: (v) => setState(() => _species = v),
+                              onSpeciesChanged: (v) {
+                                setState(() {
+                                  _species = v;
+                                });
+                              },
                               onGenderChanged: (v) => setState(() => _gender = v),
                               onPickBirthDate: _pickBirthDate,
                             ),
@@ -269,6 +317,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: PtGradientButton(
                                   label: _saving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet',
                                   onPressed: _saving ? null : _save,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: OutlinedButton.icon(
+                                onPressed: _saving ? null : _deletePet,
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(48),
+                                  side: BorderSide(color: AppColors.urgent.withValues(alpha: 0.45)),
+                                  foregroundColor: AppColors.urgent,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                                ),
+                                icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                                label: const Text(
+                                  'Profili Sil',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
                                 ),
                               ),
                             ),

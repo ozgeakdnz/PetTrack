@@ -207,17 +207,23 @@ class NutritionSummary {
 class ChatMeta {
   const ChatMeta({
     required this.assistant,
+    required this.welcome,
+    required this.tagline,
     required this.suggestions,
     required this.disclaimer,
   });
 
   final String assistant;
+  final String welcome;
+  final String tagline;
   final List<String> suggestions;
   final String disclaimer;
 
   factory ChatMeta.fromJson(Map<String, dynamic> json) {
     return ChatMeta(
       assistant: json['assistant'] as String? ?? 'Pati Dostu',
+      welcome: json['welcome'] as String? ?? '',
+      tagline: json['tagline'] as String? ?? '',
       suggestions: (json['suggestions'] as List<dynamic>? ?? [])
           .map((e) => e.toString())
           .toList(),

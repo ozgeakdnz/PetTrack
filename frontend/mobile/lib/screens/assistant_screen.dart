@@ -3,15 +3,16 @@ import 'package:intl/intl.dart';
 
 import '../models/pet_models.dart';
 import '../services/api_service.dart';
+import '../state/active_pet_scope.dart';
 import '../theme/app_colors.dart';
 
-const _welcome =
-    'Merhaba! Ben Pati Dostu AI. Evcil hayvan bakımı, belirtiler ve uygulama kullanımı hakkında sorularını yanıtlamaya hazırım. 🐾';
+const _welcomeDefault =
+    'Merhaba! Ben Pati Dostu 🐾 PetTrack\'teki pati dostunuzun sağlığı, beslenmesi ve aşı takibi için buradayım. Semptom analizi ve bakım tavsiyesi için sorunuzu yazın.';
 
 const _quickQuestionsDefault = [
-  _QuickQ(Icons.restaurant_rounded, 'Kedim bugün çok iştahsız ne yapmalıyım?'),
+  _QuickQ(Icons.restaurant_rounded, 'Kedim bugün çok iştahsız, ne yapmalıyım?'),
   _QuickQ(Icons.vaccines_rounded, 'Köpeklerde aşı sonrası halsizlik normal mi?'),
-  _QuickQ(Icons.egg_alt_outlined, 'Yavru kuşların beslenme sıklığı nedir?'),
+  _QuickQ(Icons.egg_alt_outlined, 'PetTrack\'te aşı hatırlatıcısı nasıl eklerim?'),
 ];
 
 class _QuickQ {
@@ -38,11 +39,12 @@ class AssistantScreen extends StatefulWidget {
 }
 
 class _AssistantScreenState extends State<AssistantScreen> {
+  ActivePetScope? _scope;
+  String? _loadedPetId;
   final _input = TextEditingController();
   final _scroll = ScrollController();
-  final _messages = <_UiMessage>[
-    _UiMessage(role: 'assistant', content: _welcome, time: DateTime.now()),
-  ];
+  String _welcomeText = _welcomeDefault;
+  final _messages = <_UiMessage>[];
   bool _loading = false;
   List<_QuickQ> _quickQuestions = _quickQuestionsDefault;
   String _disclaimer =
@@ -51,14 +53,24 @@ class _AssistantScreenState extends State<AssistantScreen> {
   @override
   void initState() {
     super.initState();
+    _messages.add(_UiMessage(role: 'assistant', content: _welcomeDefault, time: DateTime.now()));
     _loadMeta();
   }
 
-  Future<void> _loadMeta() async {
+  Future<void> _loadMeta({String? petId}) async {
     try {
-      final meta = await ApiService.instance.getChatMeta();
+      final meta = await ApiService.instance.getChatMeta(petId: petId);
       if (!mounted) return;
       setState(() {
+        _loadedPetId = petId;
+        if (meta.welcome.isNotEmpty) {
+          _welcomeText = meta.welcome;
+          if (_isWelcomeOnlyChat()) {
+            _messages
+              ..clear()
+              ..add(_UiMessage(role: 'assistant', content: meta.welcome, time: DateTime.now()));
+          }
+        }
         if (meta.suggestions.isNotEmpty) {
           _quickQuestions = meta.suggestions
               .asMap()
@@ -69,6 +81,10 @@ class _AssistantScreenState extends State<AssistantScreen> {
         if (meta.disclaimer.isNotEmpty) _disclaimer = meta.disclaimer;
       });
     } catch (_) {}
+  }
+
+  bool _isWelcomeOnlyChat() {
+    return _messages.length == 1 && _messages.first.role == 'assistant';
   }
 
   static IconData _iconForIndex(int i) {
@@ -94,9 +110,33 @@ class _AssistantScreenState extends State<AssistantScreen> {
 
   @override
   void dispose() {
+    _scope?.removeListener(_onScopeChanged);
     _input.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = ActivePetScopeWidget.maybeOf(context);
+    if (!identical(_scope, next)) {
+      _scope?.removeListener(_onScopeChanged);
+      _scope = next;
+      _scope?.addListener(_onScopeChanged);
+      final petId = _scope?.activePetId;
+      if (petId != _loadedPetId) {
+        _loadMeta(petId: petId);
+      }
+    }
+  }
+
+  void _onScopeChanged() {
+    final petId = _scope?.activePetId;
+    if (petId != _loadedPetId) {
+      _loadMeta(petId: petId);
+    }
+    if (mounted) setState(() {});
   }
 
   void _scrollToBottom() {
@@ -123,10 +163,14 @@ class _AssistantScreenState extends State<AssistantScreen> {
 
     try {
       final history = _messages
-          .where((m) => m.content != _welcome || m.role == 'user')
+          .where((m) => m.role == 'user' || m.content != _welcomeText)
           .map((m) => ChatMessage(role: m.role, content: m.content))
           .toList();
-      final reply = await ApiService.instance.chat(prompt, history);
+      final reply = await ApiService.instance.chat(
+        prompt,
+        history,
+        petId: _scope?.activePetId,
+      );
       if (!mounted) return;
       setState(() {
         _messages.add(_UiMessage(role: 'assistant', content: reply, time: DateTime.now()));
@@ -152,7 +196,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     setState(() {
       _messages
         ..clear()
-        ..add(_UiMessage(role: 'assistant', content: _welcome, time: DateTime.now()));
+        ..add(_UiMessage(role: 'assistant', content: _welcomeText, time: DateTime.now()));
     });
   }
 

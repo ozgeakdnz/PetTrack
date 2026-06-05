@@ -1,7 +1,10 @@
 "use client";
 
 import { apiUrl } from "@/lib/api";
+import { useActivePet } from "@/lib/active-pet-context";
+import { resolvePetImageSrc } from "@/lib/pet-avatar";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivePetAvatar } from "@/components/active-pet-avatar";
 import {
   Bell,
   Calendar,
@@ -9,6 +12,7 @@ import {
   Plus,
   ShieldCheck,
   Syringe,
+  Trash2,
   UserRoundCog,
   Weight,
 } from "lucide-react";
@@ -24,22 +28,6 @@ type Pet = {
   weight: number | null;
   ownerId: string;
 };
-
-const SPECIES_FALLBACK_IMAGE: Record<Pet["species"], string> = {
-  CAT: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=800&q=80",
-  DOG: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80",
-  BIRD: "https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&w=800&q=80",
-};
-
-function resolvePetImageSrc(pet: Pet | null, species: Pet["species"] | undefined, previewUrl: string | null): string {
-  if (previewUrl) return previewUrl;
-  if (pet?.imageUrl) {
-    if (pet.imageUrl.startsWith("http")) return pet.imageUrl;
-    // Aynı origin üzerinden proxy (next.config rewrites → backend /uploads)
-    return pet.imageUrl.startsWith("/") ? pet.imageUrl : `/${pet.imageUrl}`;
-  }
-  return SPECIES_FALLBACK_IMAGE[species ?? "CAT"];
-}
 
 async function readApiResponse<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") ?? "";
@@ -73,11 +61,12 @@ const summaryItems = [
 ] as const;
 
 export default function PetsPage() {
+  const { activePetId, setActivePetId, refreshPets } = useActivePet();
   const [pets, setPets] = useState<Pet[]>([]);
-  const [activePetId, setActivePetId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPolicyDetail, setShowPolicyDetail] = useState(false);
@@ -150,11 +139,11 @@ export default function PetsPage() {
       if (!res.ok) throw new Error(data.error ?? "Profil verileri alınamadı.");
       const loadedPets = data.pets ?? [];
       setPets(loadedPets);
-      setActivePetId((prev) => {
-        if (!prev) return loadedPets[0]?.id ?? null;
-        const exists = loadedPets.some((pet) => pet.id === prev);
-        return exists ? prev : (loadedPets[0]?.id ?? null);
-      });
+      const nextId =
+        activePetId && loadedPets.some((pet) => pet.id === activePetId)
+          ? activePetId
+          : (loadedPets[0]?.id ?? null);
+      setActivePetId(nextId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Beklenmeyen hata oluştu.");
     } finally {
@@ -215,8 +204,41 @@ export default function PetsPage() {
       setActivePetId(data.pet.id);
       setIsEditing(true);
       setNotice("Yeni evcil hayvan profili eklendi. Bilgileri düzenleyebilirsin.");
+      await refreshPets();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Profil ekleme başarısız.");
+    }
+  }
+
+  async function handleDeletePet() {
+    if (!activePet) return;
+
+    const confirmed = window.confirm(
+      `${activePet.name} profilini silmek istediğinize emin misiniz? Takvim, sağlık ve beslenme kayıtları da silinir.`,
+    );
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const res = await fetch(apiUrl(`/api/pets/${activePet.id}`), { method: "DELETE" });
+      const data = await readApiResponse<{ ok?: boolean; error?: string }>(res);
+      if (!res.ok) {
+        throw new Error(data.error ?? "Profil silinemedi.");
+      }
+
+      const remaining = pets.filter((pet) => pet.id !== activePet.id);
+      setPets(remaining);
+      setActivePetId(remaining[0]?.id ?? null);
+      setIsEditing(false);
+      setNotice("Profil silindi.");
+      await refreshPets();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Profil silme başarısız.");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -249,6 +271,7 @@ export default function PetsPage() {
       setPets((prev) => prev.map((pet) => (pet.id === data.pet!.id ? data.pet! : pet)));
       setIsEditing(false);
       setNotice("Profil bilgileri başarıyla kaydedildi.");
+      await refreshPets();
       await loadSummary(data.pet.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Güncelleme başarısız.");
@@ -305,6 +328,7 @@ export default function PetsPage() {
         return null;
       });
       setNotice("Profil resmi güncellendi.");
+      await refreshPets();
     } catch (err) {
       setImagePreview((prev) => {
         if (prev) URL.revokeObjectURL(prev);
@@ -332,7 +356,7 @@ export default function PetsPage() {
   return (
     <section className="mx-auto w-full max-w-7xl space-y-6">
       <header className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-teal-900">Hayvan Profilleri</h2>
+        <h2 className="text-4xl font-bold tracking-tight text-slate-900">Hayvan Profilleri</h2>
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -352,6 +376,18 @@ export default function PetsPage() {
             <Plus size={16} />
             Evcil Hayvan Ekle
           </button>
+          {activePet ? (
+            <button
+              type="button"
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => void handleDeletePet()}
+            >
+              <Trash2 size={16} />
+              {isDeleting ? "Siliniyor..." : "Profili Sil"}
+            </button>
+          ) : null}
+          <ActivePetAvatar />
         </div>
       </header>
 
@@ -540,7 +576,7 @@ export default function PetsPage() {
             <button
               type="submit"
               onClick={() => void handleSave()}
-              disabled={!isEditing || !activePet || isSaving}
+              disabled={!isEditing || !activePet || isSaving || isDeleting}
               className="rounded-full bg-teal-600 px-7 py-3 text-sm font-semibold text-white transition hover:bg-teal-700"
             >
               {isSaving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../state/active_pet_scope.dart';
 import '../theme/app_colors.dart';
+import '../utils/pet_avatar.dart';
 
-/// Üst bar: sol PetTrack, sağ bildirim (+ isteğe bağlı avatar).
+/// Üst bar: sol PetTrack, sağ bildirim + aktif evcil hayvan avatarı.
 class PtHeader extends StatelessWidget {
   const PtHeader({
     super.key,
-    this.showProfileAvatar = false,
-    this.profileImageAsset = 'assets/images/user_avatar.png',
     this.onNotificationsTap,
   });
 
-  final bool showProfileAvatar;
-  final String profileImageAsset;
   final VoidCallback? onNotificationsTap;
 
   @override
   Widget build(BuildContext context) {
+    final scope = ActivePetScopeWidget.maybeOf(context);
+
     return Padding(
       padding: EdgeInsets.fromLTRB(20, MediaQuery.paddingOf(context).top + 12, 20, 8),
       child: Row(
@@ -40,13 +40,24 @@ class PtHeader extends StatelessWidget {
             icon: const Icon(Icons.notifications_none_rounded),
             color: AppColors.textSecondary,
           ),
-          if (showProfileAvatar) ...[
-            const SizedBox(width: 4),
-            CircleAvatar(
-              radius: 18,
-              backgroundImage: AssetImage(profileImageAsset),
+          if (scope != null)
+            ListenableBuilder(
+              listenable: scope,
+              builder: (context, _) {
+                final pet = scope.activePet;
+                if (pet == null) {
+                  return const SizedBox(width: 36, height: 36);
+                }
+                return CircleAvatar(
+                  radius: 18,
+                  backgroundColor: const Color(0xFFE8EAED),
+                  backgroundImage: PetAvatar.resolve(
+                    species: pet.species,
+                    imageUrl: pet.imageUrl,
+                  ),
+                );
+              },
             ),
-          ],
         ],
       ),
     );

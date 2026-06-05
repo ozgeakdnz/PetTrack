@@ -12,7 +12,6 @@ import 'state/active_pet_scope.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'widgets/pt_bottom_nav.dart';
-import 'widgets/pt_robot_fab.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,29 +97,15 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final fabBottom = 16 + bottomInset;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: false,
       body: Column(
         children: [
           Expanded(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                IndexedStack(
-                  index: _stackPage,
-                  children: _pages,
-                ),
-                if (_stackPage == 0 || _stackPage == 3)
-                  PtRobotFab(
-                    bottomOffset: fabBottom,
-                    label: _stackPage == 3 ? 'Pati Dostu' : null,
-                    onPressed: _openAssistant,
-                  ),
-              ],
+            child: IndexedStack(
+              index: _stackPage,
+              children: _pages,
             ),
           ),
           PtBottomNav(

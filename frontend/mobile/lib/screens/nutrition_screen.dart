@@ -26,6 +26,11 @@ class _NutritionScreenState extends State<NutritionScreen> {
   bool _loading = true;
   String? _error;
 
+  String _focus = 'Kilo Koruma';
+  int _mealCount = 3;
+
+  static const _focusOptions = ['Kilo Koruma', 'Kilo Verme', 'Kilo Alma'];
+
   @override
   void initState() {
     super.initState();
@@ -108,8 +113,69 @@ class _NutritionScreenState extends State<NutritionScreen> {
       );
       return;
     }
-    final ok = await showAddNutritionSheet(context, petId: _pet!.id);
+    final ok = await showAddNutritionSheet(
+      context,
+      petId: _pet!.id,
+      frequency: _mealCount,
+      dietFocus: _focus,
+    );
     if (ok == true) await _load();
+  }
+
+  int _baseKcal(Pet? pet) {
+    if (pet?.weight != null) {
+      return (30 * pet!.weight! + 70).round();
+    }
+    return 1240;
+  }
+
+  double _focusMultiplier(String focus) {
+    switch (focus) {
+      case 'Kilo Verme':
+        return 0.9;
+      case 'Kilo Alma':
+        return 1.1;
+      default:
+        return 1.0;
+    }
+  }
+
+  double _mealMultiplier(int count) {
+    if (count == 2) return 0.95;
+    if (count == 4) return 1.05;
+    return 1.0;
+  }
+
+  int _planDailyTarget(Pet? pet) {
+    final target = (_baseKcal(pet) * _focusMultiplier(_focus) * _mealMultiplier(_mealCount)).round();
+    return target < 300 ? 300 : target;
+  }
+
+  String _planTip() {
+    switch (_focus) {
+      case 'Kilo Verme':
+        return 'Evcil hayvanın kilo kontrolü için öğünler düzenli saatlerde verilmeli, günlük hareket süresi artırılmalı ve öğün sayısı $_mealCount olarak korunmalıdır.';
+      case 'Kilo Alma':
+        return 'Evcil hayvanın kilo alımını desteklemek için enerji yoğunluğu daha yüksek öğünler tercih edilmeli, protein oranı artırılmalı ve öğün sayısı $_mealCount olarak planlanmalıdır.';
+      default:
+        return 'Evcil hayvanın kilosu dengede tutmak için mevcut öğün planına sadık kalınmalı, su tüketimi takip edilmeli ve günlük aktivite seviyesi düzenli sürdürülmelidir.';
+    }
+  }
+
+  Future<void> _applyPlan() async {
+    if (_pet == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Önce bir evcil hayvan profili oluşturun')),
+      );
+      return;
+    }
+    setState(() {});
+    await _load();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Plan güncellendi')),
+      );
+    }
   }
 
   void _showAllMeals() {
@@ -133,11 +199,12 @@ class _NutritionScreenState extends State<NutritionScreen> {
 
   Widget _buildMealCard(NutritionItem meal) {
     final completed = meal.isCompleted;
+    final typeLabel = _mealTypeLabel(meal);
     return _MealCard(
-      imageAsset: _mealImage(meal.foodName),
+      imageAsset: _mealImageFor(meal),
       topLine: '${_mealPeriod(meal.feedTime)} • ${meal.feedTime}',
       title: meal.foodName,
-      meta: '${meal.amount}${meal.notes != null && meal.notes!.isNotEmpty ? ' • ${meal.notes}' : ''}',
+      meta: '${meal.amount} • $typeLabel${meal.notes != null && meal.notes!.isNotEmpty && !_focusOptions.contains(meal.notes) ? ' • ${meal.notes}' : ''}',
       accentLeft: !completed,
       trailing: completed
           ? Container(
@@ -169,17 +236,40 @@ class _NutritionScreenState extends State<NutritionScreen> {
     );
   }
 
-  String _mealImage(String foodName) {
-    final lower = foodName.toLowerCase();
-    if (lower.contains('wet') || lower.contains('konserve')) return 'assets/images/meal_wet.png';
-    if (lower.contains('akşam') || lower.contains('evening')) return 'assets/images/meal_evening.png';
-    return 'assets/images/meal_dry.png';
+  String _mealTypeLabel(NutritionItem meal) {
+    final lower = meal.foodName.toLowerCase();
+    if (lower.contains('wet') || lower.contains('konserve') || lower.contains('yaş')) {
+      return 'Yaş Mama';
+    }
+    if (_mealPeriod(meal.feedTime) == 'ÖĞLE') return 'Yaş Mama';
+    return 'Kuru Mama';
+  }
+
+  String _mealImageFor(NutritionItem meal) {
+    final lower = meal.foodName.toLowerCase();
+    if (lower.contains('wet') || lower.contains('konserve') || lower.contains('yaş')) {
+      return 'assets/images/meal_wet.png';
+    }
+    switch (_mealPeriod(meal.feedTime)) {
+      case 'ÖĞLE':
+        return 'assets/images/meal_wet.png';
+      case 'AKŞAM':
+        return 'assets/images/meal_evening.png';
+      default:
+        return 'assets/images/meal_dry.png';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final summary = _summary;
     final petName = summary?.petName ?? _pet?.name ?? 'Pati Dostu';
+    final dailyTarget = _planDailyTarget(_pet);
+    final consumedKcal = summary?.completedKcal ?? 0;
+    final progressPercent = dailyTarget > 0
+        ? ((consumedKcal / dailyTarget) * 100).round().clamp(0, 100)
+        : 0;
+    final tipText = _planTip();
 
     return PtScreenShell(
       child: RefreshIndicator(
@@ -261,7 +351,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '${summary?.dailyTargetKcal ?? 840}',
+                                    '$dailyTarget',
                                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                                           fontWeight: FontWeight.w900,
                                           color: AppColors.primary,
@@ -290,7 +380,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                                     Align(
                                       alignment: Alignment.centerLeft,
                                       child: FractionallySizedBox(
-                                        widthFactor: ((summary?.progressPercent ?? 0) / 100).clamp(0.0, 1.0),
+                                        widthFactor: (progressPercent / 100).clamp(0.0, 1.0),
                                         child: Container(
                                           height: 10,
                                           decoration: const BoxDecoration(
@@ -308,7 +398,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: Text(
-                                  '${summary?.progressPercent ?? 0}%',
+                                  '$progressPercent%',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.primary.withValues(alpha: 0.95),
@@ -340,7 +430,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              (summary?.progressPercent ?? 0) >= 70 ? 'Dengeli' : 'Devam',
+                              (progressPercent) >= 70 ? 'Dengeli' : 'Devam',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.primary,
@@ -356,11 +446,111 @@ class _NutritionScreenState extends State<NutritionScreen> {
                 const SizedBox(height: 18),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardWhite,
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Diyet Hedefleri',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Haftalık Odak',
+                          style: TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary.withValues(alpha: 0.95),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: _focus,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFF4F6F8),
+                            suffixIcon: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: AppColors.primary.withValues(alpha: 0.95),
+                            ),
+                          ),
+                          items: _focusOptions
+                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _focus = v ?? _focus),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Öğün Sayısı',
+                          style: TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary.withValues(alpha: 0.95),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MealCountChip(
+                                label: '2',
+                                selected: _mealCount == 2,
+                                onTap: () => setState(() => _mealCount = 2),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _MealCountChip(
+                                label: '3',
+                                selected: _mealCount == 3,
+                                onTap: () => setState(() => _mealCount = 3),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _MealCountChip(
+                                label: '4',
+                                selected: _mealCount == 4,
+                                onTap: () => setState(() => _mealCount = 4),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        PtGradientButton(
+                          label: 'Planı Güncelle',
+                          onPressed: _applyPlan,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [
                       const Expanded(
                         child: Text(
-                          'Bugünkü Öğünler',
+                          'Öğün Planlayıcı',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 16,
@@ -368,16 +558,31 @@ class _NutritionScreenState extends State<NutritionScreen> {
                           ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: _showAllMeals,
-                        child: const Text(
-                          'Hepsini Gör',
+                      TextButton.icon(
+                        onPressed: _addMeal,
+                        icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                        label: const Text(
+                          'Yeni Öğün Ekle',
                           style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary),
                         ),
                       ),
                     ],
                   ),
                 ),
+                if (_meals.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _showAllMeals,
+                        child: const Text(
+                          'Hepsini Gör',
+                          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                  ),
                 if (_meals.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -385,15 +590,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
                   )
                 else
                   ..._meals.take(5).map(_buildMealCard),
-                const SizedBox(height: 14),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: PtGradientButton(
-                    label: 'Haftalık Planı Güncelle',
-                    icon: Icons.calendar_month_rounded,
-                    onPressed: _addMeal,
-                  ),
-                ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -422,7 +618,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                summary?.tip ?? 'Öğün saatlerini düzenli tutun.',
+                                tipText,
                                 style: TextStyle(
                                   height: 1.35,
                                   color: AppColors.primary.withValues(alpha: 0.92),
@@ -438,6 +634,49 @@ class _NutritionScreenState extends State<NutritionScreen> {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MealCountChip extends StatelessWidget {
+  const _MealCountChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.primary : const Color(0xFFF4F6F8),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.borderSoft,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: selected ? Colors.white : AppColors.textPrimary,
+            ),
           ),
         ),
       ),
@@ -534,6 +773,13 @@ class _MealCard extends StatelessWidget {
                         width: 68,
                         height: 68,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 68,
+                          height: 68,
+                          color: const Color(0xFFE8EAED),
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.restaurant_rounded, color: AppColors.primary, size: 28),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),

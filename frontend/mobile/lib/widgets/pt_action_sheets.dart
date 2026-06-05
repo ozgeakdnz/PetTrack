@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/pet_models.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
+import '../utils/pet_avatar.dart';
 import 'pt_gradient_button.dart';
 
 /// Yeni evcil hayvan ekleme formu.
@@ -79,6 +80,25 @@ class _AddPetSheetState extends State<_AddPetSheet> {
         children: [
           const Text('Yeni Evcil Hayvan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
           const SizedBox(height: 16),
+          Center(
+            child: CircleAvatar(
+              radius: 44,
+              backgroundColor: const Color(0xFFE8EAED),
+              backgroundImage: PetAvatar.resolve(species: _species, imageUrl: null),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              _species == 'DOG' ? 'Köpek' : _species == 'BIRD' ? 'Kuş' : 'Kedi',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary.withValues(alpha: 0.95),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _nameCtrl,
             decoration: const InputDecoration(labelText: 'İsim *'),
@@ -147,6 +167,7 @@ class _AddCalendarSheetState extends State<_AddCalendarSheet> {
   final _nameCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   DateTime _date = DateTime.now().add(const Duration(days: 1));
+  String _status = 'PENDING';
   bool _saving = false;
 
   @override
@@ -186,6 +207,7 @@ class _AddCalendarSheetState extends State<_AddCalendarSheet> {
         name: name,
         date: _date,
         notes: _notesCtrl.text.trim(),
+        status: _status,
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -229,6 +251,41 @@ class _AddCalendarSheetState extends State<_AddCalendarSheet> {
             controller: _notesCtrl,
             decoration: const InputDecoration(labelText: 'Not (klinik, konum vb.)'),
           ),
+          const SizedBox(height: 14),
+          const Text(
+            'Durum',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ChoiceChip(
+                  label: const Text('Bekliyor'),
+                  selected: _status == 'PENDING',
+                  onSelected: (_) => setState(() => _status = 'PENDING'),
+                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                  labelStyle: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: _status == 'PENDING' ? AppColors.primary : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ChoiceChip(
+                  label: const Text('Tamamlandı'),
+                  selected: _status == 'COMPLETED',
+                  onSelected: (_) => setState(() => _status = 'COMPLETED'),
+                  selectedColor: const Color(0xFFFFE0B2),
+                  labelStyle: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: _status == 'COMPLETED' ? const Color(0xFFE65100) : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
           PtGradientButton(
             label: _saving ? 'Kaydediliyor...' : 'Hatırlatıcı Kaydet',
@@ -241,7 +298,12 @@ class _AddCalendarSheetState extends State<_AddCalendarSheet> {
 }
 
 /// Beslenme öğünü ekleme.
-Future<bool?> showAddNutritionSheet(BuildContext context, {required String petId}) {
+Future<bool?> showAddNutritionSheet(
+  BuildContext context, {
+  required String petId,
+  int frequency = 3,
+  String? dietFocus,
+}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -249,14 +311,24 @@ Future<bool?> showAddNutritionSheet(BuildContext context, {required String petId
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (ctx) => _AddNutritionSheet(petId: petId),
+    builder: (ctx) => _AddNutritionSheet(
+      petId: petId,
+      frequency: frequency,
+      dietFocus: dietFocus,
+    ),
   );
 }
 
 class _AddNutritionSheet extends StatefulWidget {
-  const _AddNutritionSheet({required this.petId});
+  const _AddNutritionSheet({
+    required this.petId,
+    required this.frequency,
+    this.dietFocus,
+  });
 
   final String petId;
+  final int frequency;
+  final String? dietFocus;
 
   @override
   State<_AddNutritionSheet> createState() => _AddNutritionSheetState();
@@ -298,6 +370,8 @@ class _AddNutritionSheetState extends State<_AddNutritionSheet> {
         foodName: food,
         amount: amount,
         feedTime: feedTime,
+        frequency: widget.frequency,
+        notes: widget.dietFocus,
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {

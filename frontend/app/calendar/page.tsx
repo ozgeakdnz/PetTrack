@@ -1,8 +1,10 @@
 "use client";
 
 import { apiUrl } from "@/lib/api";
+import { useActivePet } from "@/lib/active-pet-context";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ActivePetAvatar } from "@/components/active-pet-avatar";
 
 const günler = ["PZT", "SAL", "ÇAR", "PER", "CUM", "CMT", "PAZ"];
 const ayAdları = [
@@ -66,12 +68,12 @@ function ageLabel(dateText: string | null) {
 }
 
 export default function CalendarPage() {
+  const { activePetId, setActivePetId } = useActivePet();
   const [monthCursor, setMonthCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [pets, setPets] = useState<Pet[]>([]);
-  const [selectedPetId, setSelectedPetId] = useState("");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [reminders, setReminders] = useState<CalendarEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -86,9 +88,11 @@ export default function CalendarPage() {
   });
 
   const selectedPet = useMemo(
-    () => pets.find((pet) => pet.id === selectedPetId) ?? null,
-    [pets, selectedPetId],
+    () => pets.find((pet) => pet.id === activePetId) ?? null,
+    [pets, activePetId],
   );
+
+  const selectedPetId = activePetId ?? "";
 
   const calendarCells = useMemo(() => {
     const firstDay = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
@@ -131,10 +135,13 @@ export default function CalendarPage() {
     if (!res.ok) throw new Error(data.error ?? "Profiller alınamadı.");
     const list = data.pets ?? [];
     setPets(list);
-    const chosen = selectedPetId && list.some((pet) => pet.id === selectedPetId) ? selectedPetId : (list[0]?.id || "");
-    setSelectedPetId(chosen);
+    const chosen =
+      activePetId && list.some((pet) => pet.id === activePetId)
+        ? activePetId
+        : (list[0]?.id || "");
+    if (chosen) setActivePetId(chosen);
     return chosen;
-  }, [selectedPetId]);
+  }, [activePetId, setActivePetId]);
 
   const loadCalendar = useCallback(async (petId: string, monthDate: Date) => {
     if (!petId) {
@@ -163,7 +170,7 @@ export default function CalendarPage() {
   }, [loadPets, loadCalendar, monthCursor]);
 
   async function onChangePet(petId: string) {
-    setSelectedPetId(petId);
+    setActivePetId(petId);
     setError(null);
     try {
       await loadCalendar(petId, monthCursor);
@@ -239,9 +246,10 @@ export default function CalendarPage() {
     <section className="mx-auto w-full max-w-6xl">
       <header className="flex items-center justify-between">
         <h2 className="text-4xl font-bold tracking-tight text-teal-800">Aşı ve Randevu Takvimi</h2>
-        <div className="flex items-center gap-5 text-slate-600">
+        <div className="flex items-center gap-4 text-slate-600">
           <Bell className="h-5 w-5 text-teal-700" />
           <span className="text-lg">{ayYılıEtiketi}</span>
+          <ActivePetAvatar />
         </div>
       </header>
       {error && <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">{error}</p>}
