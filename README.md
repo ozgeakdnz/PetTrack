@@ -71,16 +71,6 @@ PetTrack hafif ama etkileşimli bir sağlık takip deneyimi sunar:
 |:------:|:--------------:|:--------:|
 | ![Takvim](./docs/screenshots/web/calendar.png) | ![Belirti](./docs/screenshots/web/symptoms.png) | ![Beslenme](./docs/screenshots/web/nutrition.png) |
 
-### Mobil — Flutter (iOS)
-
-![Mobil Pati Dostu](./docs/screenshots/mobile/assistant.png)
-
-### Mobil — Web responsive görünüm
-
-![Mobil web asistan](./docs/screenshots/mobile-web/assistant.png)
-
-> Daha fazla görüntü: [`docs/screenshots/`](./docs/screenshots/)
-
 ---
 
 ## ✨ Özellikler
@@ -360,14 +350,6 @@ NEXT_PUBLIC_API_URL=http://localhost:1571
 | [`prodocs/DesignSystem.md`](./prodocs/DesignSystem.md) | UI kuralları |
 | [`prodocs/Progress.md`](./prodocs/Progress.md) | İlerleme günlüğü |
 | [`prodocs/README.md`](./prodocs/README.md) | AI ajan referans indeksi |
-
----
-
-## 🎓 Hakkında
-
-PetTrack, **YGA Future Talent Programı — Modül 301 Bootcamp** kapsamında geliştirilen bir MVP projesidir.
-
-Evcil hayvan sahiplerinin sağlık verilerini düzenli tutmasını ve yapay zeka destekli bakım tavsiyesi almasını hedefler.
 
 ---
 
