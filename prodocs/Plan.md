@@ -1,185 +1,196 @@
-# Pet Track — LLM ve geliştirici için yürütme planı
+# PetTrack — Yürütme Planı
 
-Bu belge, `prodocs/PRD.md` içindeki **Faz 1 / MVP** kapsamı ve teknik PRD bölümlerinden türetilmiştir. Amaç: projeyi yeterince küçük, sıralı ve izlenebilir adımlara bölmek; bir LLM veya geliştiricinin aynı sırayla ilerleyebilmesini sağlamak.
+> PRD'den türetilmiş teknik adımlar, user story eşlemesi ve **tamamlanma durumu**.  
+> LLM veya geliştirici bu sırayla ilerleyebilir.
 
-**Kaynak dokümanlar:** `prodocs/PRD.md` (ürün vizyonu, tech stack, şema, API uçları, ekranlar, user stories, kapsam dışı).
-
----
-
-## 1. Bağlam özeti (PRD’den)
-
-| Konu | MVP hedefi |
-|------|------------|
-| Ürün | Evcil hayvan profili, aşı/randevu, belirti günlüğü, beslenme planı |
-| İstemci (hedef PRD) | iOS native (SwiftUI) |
-| Backend (PRD) | REST/JSON API — PRD’de Next.js 16 Route Handlers |
-| Veri | PostgreSQL + Prisma; `ownerId` ile basit sahiplik (MVP) |
-| Dağıtım (PRD) | Vercel (API) + Supabase (DB); TestFlight (iOS) |
-
-**Not:** Repo **npm workspaces** monorepo: `backend/` (API + Prisma, varsayılan port **1571**) ve `frontend/` (UI, port **1575**). Kök `npm run dev` her iki paketi birlikte çalıştırır. Arayüz, `frontend/lib/api.ts` üzerinden `NEXT_PUBLIC_API_URL` ile API’ye bağlanır; CORS `backend/middleware.ts` ile ayarlanır.
+**Kaynak:** [`PRD.md`](./PRD.md) · **İlerleme:** [`Progress.md`](./Progress.md)
 
 ---
 
-## 2. Kod yapısı — Backend / Frontend (fiziksel dizinler)
+## 1. Bağlam özeti
 
-`node_modules`, `.git`, derleme çıktıları listelenmez.
+| Konu | Hedef | Durum |
+|------|-------|-------|
+| Ürün kapsamı | Profil, takvim, belirti, beslenme, AI asistan | ✅ |
+| Web istemci | Next.js, port 1575 | ✅ |
+| Mobil istemci | Flutter iOS/Android | ✅ |
+| Backend API | Next.js Route Handlers, port 1571 | ✅ |
+| Veritabanı | PostgreSQL + Prisma | ✅ |
+| AI (Gemini) | `/api/chat` — Pati Dostu | ✅ |
+| Canlı deploy | Vercel + Supabase | ⏳ |
 
-### 2.1 Backend (`backend/`)
+**Monorepo:** Kök `npm run dev` → backend (1571) + frontend (1575) birlikte.  
+**API bağlantısı:** `frontend/lib/api.ts` → `NEXT_PUBLIC_API_URL` · CORS: `backend/middleware.ts`
+
+---
+
+## 2. Kod haritası
+
+### Backend (`backend/`)
 
 | Yol | Rol |
 |-----|-----|
-| `backend/prisma/schema.prisma` | Veritabanı modeli |
-| `backend/prisma.config.ts` | Prisma 7 yapılandırması |
-| `backend/lib/prisma.ts` | Prisma istemcisi |
-| `backend/lib/generated/prisma/**` | `prisma generate` çıktısı |
-| `backend/app/api/pets/route.ts` | Hayvan listesi / oluşturma |
-| `backend/app/api/pets/[id]/route.ts` | Tek hayvan CRUD |
-| `backend/app/api/pets/[id]/summary/route.ts` | Özet |
-| `backend/app/api/calendar/route.ts` | Takvim koleksiyonu |
-| `backend/app/api/calendar/[id]/route.ts` | Takvim öğesi |
-| `backend/app/api/nutrition/route.ts` | Beslenme |
-| `backend/app/api/nutrition/[id]/route.ts` | Beslenme tekil |
-| `backend/app/api/symptoms/route.ts` | Belirti |
-| `backend/app/api/symptoms/export/route.ts` | Dışa aktarma |
-| `backend/app/api/uploads/route.ts` | Yükleme |
-| `backend/app/api/chat/route.ts` | Sohbet |
-| `backend/middleware.ts` | CORS (API için) |
-| `backend/package.json`, `next.config.ts`, `tsconfig.json` | Backend paketi |
+| `prisma/schema.prisma` | Veri modeli |
+| `lib/prisma.ts` | DB istemcisi |
+| `lib/pati-dostu-prompt.ts` | AI prompt & kişiselleştirme |
+| `app/api/pets/**` | Hayvan CRUD + özet |
+| `app/api/calendar/**` | Aşı & randevu |
+| `app/api/symptoms/**` | Belirti + CSV export |
+| `app/api/nutrition/**` | Beslenme + summary |
+| `app/api/uploads/route.ts` | Fotoğraf yükleme |
+| `app/api/chat/route.ts` | Pati Dostu (Gemini) |
+| `middleware.ts` | CORS |
 
-### 2.2 Frontend (`frontend/`)
+### Frontend web (`frontend/`)
 
 | Yol | Rol |
 |-----|-----|
-| `frontend/app/layout.tsx` | Kök layout |
-| `frontend/app/page.tsx` | Ana sayfa (yönlendirme) |
-| `frontend/app/globals.css` | Global stiller |
-| `frontend/app/pets/page.tsx` | Hayvanlar |
-| `frontend/app/calendar/page.tsx` | Takvim |
-| `frontend/app/nutrition/page.tsx` | Beslenme |
-| `frontend/app/symptoms/page.tsx` | Belirtiler |
-| `frontend/components/*` | Kabuk, navigasyon, chatbox |
-| `frontend/lib/api.ts` | API taban URL (`NEXT_PUBLIC_API_URL`) |
-| `frontend/public/` | Statik varlıklar |
-| `frontend/package.json`, `postcss.config.mjs`, `next.config.ts` | Frontend paketi |
+| `app/pets/page.tsx` | Hayvan profilleri |
+| `app/calendar/page.tsx` | Takvim |
+| `app/symptoms/page.tsx` | Sağlık günlüğü |
+| `app/nutrition/page.tsx` | Beslenme |
+| `app/assistant/page.tsx` | Pati Dostu AI |
+| `components/app-shell.tsx` | Sidebar navigasyon |
+| `components/active-pet-avatar.tsx` | Aktif pet rozeti |
+| `lib/active-pet-context.tsx` | Aktif pet state |
+| `lib/api.ts` | API base URL |
 
-### 2.3 Mobil (`frontend/mobile/`)
+### Mobil (`frontend/mobile/`)
 
 | Yol | Rol |
 |-----|-----|
-| `frontend/mobile/lib/` | Flutter ekranlar, tema, API config |
-| `frontend/mobile/ios/`, `android/` | Platform projeleri |
-
-### 2.4 Python API (`backend/py/`)
-
-| Yol | Rol |
-|-----|-----|
-| `backend/py/main.py` | FastAPI uygulaması |
-| `backend/py/routers/` | Günlük soru, diary entries |
-
-### 2.5 Kök / paylaşılan
-
-| Yol | Rol |
-|-----|-----|
-| `package.json` | Workspaces + ortak script’ler (`dev`, `build`, `prisma:*`) |
-| `README.md`, `prodocs/` | Dokümantasyon ve AI referansları |
+| `screens/profile_screen.dart` | Profiller |
+| `screens/calendar_screen.dart` | Takvim |
+| `screens/health_diary_screen.dart` | Belirti |
+| `screens/nutrition_screen.dart` | Beslenme |
+| `screens/assistant_screen.dart` | Pati Dostu |
+| `services/api_service.dart` | HTTP istemci |
+| `state/active_pet_scope.dart` | Aktif pet |
+| `widgets/pt_header.dart` | Üst bar + avatar |
 
 ---
 
-## 3. Sonraki mimari adımlar (isteğe bağlı)
+## 3. Yürütme adımları
 
-**Tam ayrı depo veya farklı runtime:** `backend/` şu an Next route handlers kullanıyor; ileride aynı Prisma şemasıyla ayrı bir Node (Hono/Fastify) veya sunucusuz dağıtım seçilebilir. **iOS (SwiftUI)** istemcisi aynı REST uçlarını `NEXT_PUBLIC_API_URL` benzeri bir taban URL ile kullanır.
+### Adım 0 — Ortam kurulumu
 
-**Geçiş özeti:**
+- [x] Node 20+, npm workspaces
+- [x] PostgreSQL + `DATABASE_URL`
+- [x] `npm run prisma:generate` && `prisma:migrate`
+- [x] `.env.example` şablonu
+- **Bitti:** `npm run dev` ile web + API ayakta
 
-1. ~~Faz A — Mantıksal ayrım~~ (önceki taslak).
-2. **Faz B — Tamamlandı:** `backend/` ve `frontend/` ayrı `package.json`, kök `npm run dev`.
-3. **Faz C:** Üretimde iki ayrı URL (ör. Vercel iki proje veya API alt alan adı); env ile taban URL’ler.
+### Adım 1 — Backend API
+
+- [x] Pet CRUD (`/api/pets`, `/api/pets/[id]`)
+- [x] Takvim (`/api/calendar`) — PRD'deki vaccinations yerine
+- [x] Belirti (`/api/symptoms`, export)
+- [x] Beslenme (`/api/nutrition`, summary)
+- [x] Upload (`/api/uploads`)
+- [x] Chat (`/api/chat`) — Gemini
+- [x] CORS middleware
+- **Bitti:** REST checklist PRD §6 ile uyumlu
+
+### Adım 2 — Frontend web
+
+- [x] AppShell + 5 sayfa
+- [x] Aktif pet context + sayfa bazlı rozet
+- [x] API entegrasyonu (`apiUrl`)
+- [x] Pati Dostu sohbet + hızlı sorular
+- **Bitti:** Tüm modüller canlı API ile çalışır
+
+### Adım 3 — Mobil Flutter
+
+- [x] 5 ekran + alt navigasyon
+- [x] ApiService → backend
+- [x] Aktif pet scope
+- [x] PtHeader avatar tüm sayfalarda
+- [x] Pati Dostu ekranı + kişiselleştirilmiş meta
+- [x] Profil silme, tür bazlı varsayılan avatar
+- **Bitti:** iOS simülatörde uçtan uca akış
+
+### Adım 4 — EPIC 1: Hayvan profili (US 1.1–1.3)
+
+- [x] US 1.1 — Yeni hayvan ekleme (web + mobil)
+- [x] US 1.2 — Aktif pet seçimi
+- [x] US 1.3 — Profil silme
+- [x] Fotoğraf yükleme + species fallback avatar
+- **Bitti:** Çoklu pet desteği
+
+### Adım 5 — EPIC 2: Aşı & randevu (US 2.1)
+
+- [x] Hatırlatıcı ekleme / düzenleme
+- [x] Bekliyor / Tamamlandı durumu
+- [x] Aylık takvim görünümü
+- **Bitti:** Takvim modülü
+
+### Adım 6 — EPIC 3: Belirti & beslenme (US 3.1–3.3)
+
+- [x] Belirti CRUD + şiddet seviyesi
+- [x] CSV export
+- [x] Beslenme planı + öğün onaylama
+- [x] Diyet hedefleri & kalori
+- **Bitti:** Sağlık + beslenme modülleri
+
+### Adım 7 — EPIC 4: Pati Dostu AI (US 4.1–4.2)
+
+- [x] Gemini entegrasyonu (`GEMINI_API_KEY`)
+- [x] Pet bağlamlı prompt (belirti, aşı, öğün)
+- [x] Kişiselleştirilmiş karşılama & hızlı sorular
+- [x] Kota limitleri (günlük/dakika/token)
+- [x] Thinking budget kapatma (yarım yanıt fix)
+- [x] Web + mobil aynı API
+- **Bitti:** AI çekirdek özellik olarak entegre
+
+### Adım 8 — Kimlik & güvenlik (MVP sınırlı)
+
+- [ ] `ownerId` tutarlılık denetimi
+- [ ] Başka owner'ın petId'sine erişim engeli
+- [ ] Auth (JWT / Apple Sign-In) — Faz 2
+- **Durum:** MVP'de sabit ownerId; Faz 2'ye ertelendi
+
+### Adım 9 — Kalite & dokümantasyon
+
+- [x] ESLint (frontend + backend)
+- [x] prodocs/ zorunlu belgeler
+- [x] README onepager
+- [x] Progress.md güncel
+- **Bitti:** Teslim dokümantasyonu hazır
+
+### Adım 10 — Canlı deploy
+
+- [ ] Supabase / Neon PostgreSQL
+- [ ] Vercel: backend projesi
+- [ ] Vercel: frontend projesi (`NEXT_PUBLIC_API_URL`)
+- [ ] `prisma migrate deploy`
+- [ ] Canlı URL README'ye ekle
+- **Durum:** ⏳ Bekliyor — teslim için kritik
 
 ---
 
-## 4. Yürütme adımları (yeterince küçük parçalar)
+## 4. PRD endpoint uyumluluk tablosu
 
-Her adımda “Bitti sayılır” kriteri kısaca yazılmıştır.
-
-### Adım 0 — Çevre ve repoyu anlama
-
-- [ ] Node sürümünü `package.json` / ekip standardına göre sabitle (`.nvmrc` vb. isteğe bağlı).
-- [ ] `npm install` ile bağımlılıkları kur; `prisma:generate` hatasız çalışıyor mu kontrol et.
-- [ ] `.env` / `DATABASE_URL` ile PostgreSQL bağlantısını doğrula (PRD: Supabase uyumlu).
-- **Bitti:** `npm run dev` ve veritabanı bağlantısı dokümante edildi.
-
-### Adım 1 — Backend kurulumu (ayrı dizin)
-
-- [x] `backend/` paketi: `README.md`, `package.json`, Prisma, `app/api/*`, port **1571**.
-- [ ] REST uçlarını PRD §4 ile karşılaştır; eksik uçları listele (ör. `GET /api/vaccinations` vs takvim API’si).
-- **Bitti:** Backend çalışır; API checklist güncel.
-
-### Adım 2 — Frontend kurulumu (ayrı dizin)
-
-- [x] `frontend/` paketi: sayfalar, `components/`, `lib/api.ts`, `NEXT_PUBLIC_API_URL`, port **1575**.
-- [ ] PRD §5 ekranları ile mevcut sayfaları eşleştir; eksik ekranları backlog’a yaz.
-- **Bitti:** Frontend API’ye CORS ile bağlanır; ekran eşlemesi yazılı.
-
-### Adım 3 — Veri modeli ve migrasyonlar
-
-- [ ] `backend/prisma/schema.prisma` modellerinin PRD §3 tablosu ile birebir uyumunu gözden geçir.
-- [ ] `prisma migrate` veya `db push` ile şemayı ortama uygula; örnek seed (isteğe bağlı).
-- **Bitti:** Şema üretimi ve DB şeması ortamda doğrulandı.
-
-### Adım 4 — Kimlik ve çok kiracılık (MVP)
-
-- [ ] `ownerId`’nin tüm API’lerde tutarlı kullanımını doğrula (query/body).
-- [ ] Basit kötüye kullanım senaryoları: başka owner’a ait `petId` ile erişim engeli.
-- **Bitti:** MVP kimlik modeli dokümante ve kritik uçlarda kontrol var.
-
-### Adım 5 — EPIC 1: Hayvan profili (US 1.1)
-
-- [ ] `GET/POST /api/pets` ve detay uçlarının PRD acceptance criteria ile testi.
-- [ ] UI: liste + ekleme formu (validasyon, zorunlu alan hataları).
-- **Bitti:** Yeni hayvan eklenebilir ve listede görünür.
-
-### Adım 6 — EPIC 2: Aşı ve randevu (US 2.1)
-
-- [ ] Aşı modeli ve API’lerin PRD’deki isimlendirme ile hizalanması (gerekirse redirect veya alias).
-- [ ] `nextDate`, durum badge’leri, pet detay sekmesi.
-- **Bitti:** Aşı kaydı oluşturulur ve listede / planda görünür.
-
-### Adım 7 — EPIC 3: Belirti ve beslenme (US 3.1, 3.2)
-
-- [ ] Belirti günlüğü: oluşturma + zaman çizelgesi görünümü (MVP basit liste kabul).
-- [ ] Beslenme: PENDING/COMPLETED güncellemesi.
-- **Bitti:** İki modül için happy path tamam.
-
-### Adım 8 — Dışa aktarma, yükleme, sohbet (mevcut kod)
-
-- [ ] `symptoms/export`, `uploads`, `chat` uçlarının PRD’de “MVP zorunlu mu?” kararı; değilse “Faz 2 / opsiyonel” işaretle.
-- **Bitti:** Kapsam net; gereksiz MVP yükü azaltıldı veya testlendi.
-
-### Adım 9 — Kalite ve teslim
-
-- [ ] ESLint temiz; kritik API için manuel veya otomatik test.
-- [ ] README ve `prodocs/Progress.md` güncel; env şablonu `.env.example`.
-- **Bitti:** Repo yeni geliştirici + LLM ile açıklanabilir durumda.
-
-### Adım 10 — iOS istemci (PRD hedefi)
-
-- [ ] Xcode projesi; ağ katmanı (URLSession); modellerin Swift tarafında eşlenmesi.
-- [ ] TestFlight dağıtım checklist’i.
-- **Bitti:** MVP akışları cihazda doğrulanabilir.
+| PRD taslağı | Repo | Not |
+|-------------|------|-----|
+| `GET /api/vaccinations` | `GET /api/calendar?petId=` | Aynı model |
+| `POST /api/vaccinations` | `POST /api/calendar` | — |
+| — | `GET /api/chat` | AI meta (PRD sonrası) |
+| — | `POST /api/chat` | AI sohbet (PRD sonrası) |
+| — | `DELETE /api/pets/[id]` | Silme (PRD sonrası) |
 
 ---
 
-## 5. PRD “kapsam dışı” hatırlatması (Faz 1’e girme)
+## 5. Kapsam dışı — bu plana ekleme
 
-Şunları bu planın adımlarına **ekleme** (PRD §7): marketplace randevu, IoT, gelişmiş AI tanı motoru, enterprise rol/izin modeli.
-
----
-
-## 6. LLM kullanım ipuçları
-
-- **§2** tablolarıyla dosya seç: API ve Prisma için `backend/app/api/**`, `backend/lib/prisma.ts`, `backend/prisma/schema.prisma`; UI için `frontend/app/**`, `frontend/components/**`.
-- PRD §4 endpoint isimleri ile repo farklıysa **uyumluluk tablosu** üret.
-- Üretim `next build` (backend) için ortamda `DATABASE_URL` tanımlı olmalı (`lib/prisma.ts` import anında doğrular).
+PRD §9: marketplace, IoT, otomatik teşhis motoru, enterprise RBAC.
 
 ---
 
+## 6. LLM geliştirici ipuçları
+
+1. API değişikliği → önce `schema.prisma`, sonra route, sonra frontend/mobile
+2. Asla `frontend/` içinde Prisma kullanma
+3. Fetch her zaman `apiUrl("/api/...")` — göreli `/api` yok
+4. Pati Dostu değişikliği → `pati-dostu-prompt.ts` + `chat/route.ts`
+5. `.env` değişince backend restart gerekir
+6. Her sprint → `Progress.md` güncelle

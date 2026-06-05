@@ -1,49 +1,49 @@
 # PetTrack
 
-Evcil hayvan sahipleri için profil, aşı/randevu, belirti günlüğü ve beslenme takibi. Web arayüzü (Next.js) + REST API (Next.js + Prisma + PostgreSQL) + opsiyonel Flutter mobil istemci.
+**Evcil hayvan sağlığını tek yerden takip et.** Profil, aşı takvimi, belirti günlüğü, beslenme planı — ve **Pati Dostu**, Gemini destekli yapay zeka asistanı.
 
-## Klasör yapısı
+| Web | Mobil | API |
+|-----|-------|-----|
+| Next.js · port **1575** | Flutter · iOS & Android | Next.js + Prisma · port **1571** |
 
-```
-frontend/          Web arayüzü (Next.js)
-  mobile/          Flutter mobil uygulama (iOS / Android)
-backend/           REST API + Prisma + PostgreSQL
-  py/              Opsiyonel FastAPI (günlük soru / AI)
-prodocs/           PRD, plan, tasarım sistemi, ilerleme kaydı, AI referansları
-```
+---
 
-## Gereksinimler
+## Ne yapar?
 
-- Node.js 20+
-- PostgreSQL
-- (Mobil) Flutter SDK
-- (Opsiyonel Python API) Python 3.11+
+- **Hayvan profilleri** — Kedi, köpek, kuş; fotoğraf, kilo, yaş, ırk; birden fazla pet
+- **Takvim** — Aşı ve randevu hatırlatıcıları; Bekliyor / Tamamlandı
+- **Sağlık günlüğü** — Belirti türü, şiddet (Düşük / Orta / Yüksek), CSV dışa aktarma
+- **Beslenme** — Diyet hedefleri, öğün planlayıcı, kalori takibi
+- **Pati Dostu AI** — Semptom analizi ve bakım tavsiyesi; aktif pet'e göre kişiselleştirilmiş yanıtlar (Google Gemini)
 
-## Kurulum
+---
+
+## Hızlı başlangıç
 
 ```bash
 npm install
-cp .env.example backend/.env      # DATABASE_URL düzenle
-cp .env.example frontend/.env     # NEXT_PUBLIC_* satırlarını kopyala
+cp .env.example backend/.env      # DATABASE_URL + isteğe bağlı GEMINI_API_KEY
+cp .env.example frontend/.env     # NEXT_PUBLIC_API_URL
 npm run prisma:generate
 npm run prisma:migrate
 npm run dev
 ```
 
-- **Arayüz:** http://localhost:1575  
-- **API:** http://localhost:1571/api  
+| Adres | Açıklama |
+|-------|----------|
+| http://localhost:1575 | Web arayüzü |
+| http://localhost:1571/api | REST API |
 
-## Veritabanı
+### Veritabanı
 
 ```bash
-createdb pettrack                    # yerel PostgreSQL
-# veya
-npm run db:up                        # Docker (backend/docker-compose.yml, port 5433)
+createdb pettrack
+# veya: npm run db:up   # Docker PostgreSQL, port 5433
 npm run prisma:migrate
-npm run prisma:studio                # tabloları görüntüle
+npm run prisma:studio   # tablo görüntüleyici
 ```
 
-## Mobil uygulama
+### Mobil
 
 ```bash
 cd frontend/mobile
@@ -51,32 +51,47 @@ flutter pub get
 flutter run
 ```
 
-## Deploy (özet)
+Mobil uygulama `frontend/.env` içindeki `NEXT_PUBLIC_API_URL` ile backend'e bağlanır.
 
-| Bileşen | Öneri |
-|---------|--------|
-| `frontend/` | Vercel — `NEXT_PUBLIC_API_URL` = canlı API URL |
-| `backend/` | Vercel — `DATABASE_URL`, `FRONTEND_ORIGIN` set |
-| PostgreSQL | Supabase veya yönetilen PostgreSQL |
-| `frontend/mobile/` | TestFlight / Play Store build |
-| `backend/py/` | Railway / Render (opsiyonel) |
+---
 
-Üretim build:
+## Klasör yapısı
+
+```
+frontend/          Web arayüzü (Next.js)
+  mobile/          Flutter mobil uygulama
+backend/           REST API + Prisma + PostgreSQL
+  py/              Opsiyonel FastAPI servisi
+prodocs/           PRD, plan, tasarım sistemi, ilerleme kaydı
+```
+
+---
+
+## Deploy
+
+| Bileşen | Önerilen platform | Ortam değişkenleri |
+|---------|-------------------|---------------------|
+| `frontend/` | Vercel | `NEXT_PUBLIC_API_URL` |
+| `backend/` | Vercel | `DATABASE_URL`, `FRONTEND_ORIGIN`, `GEMINI_API_KEY` |
+| PostgreSQL | Supabase / Neon | Connection string |
+| `frontend/mobile/` | TestFlight / Play Store | API base URL build-time |
 
 ```bash
 DATABASE_URL="postgresql://..." npm run build
 ```
 
+---
+
 ## Dokümantasyon
 
-Tüm zorunlu belgeler `prodocs/` altında:
+Tüm zorunlu belgeler [`prodocs/`](./prodocs/) altında:
 
 | Dosya | İçerik |
 |-------|--------|
-| `PRD.md` | Ürün gereksinimleri |
-| `tech-stack.md` | Teknoloji seçimleri ve AI kullanımı |
-| `Plan.md` | Teknik adımlar ve user story’ler |
-| `DesignSystem.md` | UI kuralları |
-| `Progress.md` | İlerleme ve karar kaydı |
+| [PRD.md](./prodocs/PRD.md) | Ürün gereksinimleri |
+| [tech-stack.md](./prodocs/tech-stack.md) | Teknoloji ve AI entegrasyonu |
+| [Plan.md](./prodocs/Plan.md) | Teknik adımlar ve user story'ler |
+| [DesignSystem.md](./prodocs/DesignSystem.md) | UI kuralları |
+| [Progress.md](./prodocs/Progress.md) | İlerleme günlüğü |
 
-Ortam şablonu: kök `.env.example` (gerçek anahtarlar commit edilmez).
+Ortam şablonu: [`.env.example`](./.env.example) — gerçek API anahtarları commit edilmez.

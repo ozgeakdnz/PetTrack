@@ -1,163 +1,250 @@
-# **TEKNIK URUN GEREKSINIM DOKUMANI (TECH PRD)**
+# PetTrack — Ürün Gereksinim Dokümanı (PRD)
 
-**Proje Adi:** Pet Track
+| | |
+|---|---|
+| **Proje** | PetTrack |
+| **Aşama** | Faz 1 — MVP (Minimum Uygulanabilir Ürün) |
+| **Platform** | Web (Next.js) + Mobil (Flutter, iOS & Android) |
+| **Durum** | ✅ MVP geliştirildi — canlı deploy bekliyor |
+| **Son güncelleme** | 6 Haziran 2026 |
 
-**Asama:** Faz 1 - MVP (Minimum Uygulanabilir Urun)
+---
 
-**Platform:** Sadece iOS (Native)
+## 1. Problem ve vizyon
 
-**Hazirlayan:** Teknik Product Owner
+### Çözülen problem
 
-**Durum:** Taslak v1
+Evcil hayvan sahipleri sağlık bilgilerini dağınık tutuyor: aşı tarihleri telefon notlarında, belirtiler hafızada, mama saatleri kafada. Veteriner randevusuna giderken geçmişi toparlamak zor; acil belirtilerde ne yapılacağı belirsiz kalıyor.
 
-## **1. Urun Vizyonu ve Is Hedefleri (Ozet)**
+### Vizyon
 
-Pet Track, evcil hayvan sahiplerinin tek bir uygulama uzerinden hayvan profili, asi/randevu takibi, belirti gunlugu ve beslenme planini yonetmesini saglayan iOS odakli bir saglik takip urunudur.
+**PetTrack**, evcil hayvan sahibinin tek uygulamada profil, aşı/randevu, belirti günlüğü ve beslenmeyi yönetmesini sağlar. **Pati Dostu** yapay zeka asistanı, kayıtlı verilere dayanarak semptom analizi ve bakım tavsiyesi sunar — profesyonel teşhisin yerini almaz, yönlendirir.
 
-* **Kuzey Yildizi Metrigi:** Aylik aktif hayvan (MAA) basi tamamlanan saglik kaydi adedi.
-* **Basari Metrigi 1:** Kullanici basina aylik eklenen asi + belirti + beslenme kaydi sayisi.
-* **Basari Metrigi 2:** 30 gun icinde geri donen kullanici orani (retention).
+### Kuzey yıldızı metrikleri
 
-## **2. Teknoloji Yigini (Tech Stack) & Mimari**
+| Metrik | Açıklama |
+|--------|----------|
+| **MAA kayıt** | Aylık aktif hayvan başına tamamlanan sağlık kaydı |
+| **Kayıt yoğunluğu** | Kullanıcı başına aylık aşı + belirti + beslenme kaydı |
+| **Retention** | 30 gün içinde geri dönen kullanıcı oranı |
 
-MVP asamasinda hizli gelistirme, bakimi kolay bir backend ve premium iOS deneyimi icin asagidaki yapi hedeflenir:
+---
 
-* **Mobil Istemci (Frontend):** iOS Native (SwiftUI + Combine/async-await).  
-* **Backend (API Katmani):** Next.js 16 (Route Handlers) - mevcut projedeki App Router altyapisi kullanilir.  
-* **Veritabani:** PostgreSQL (Supabase) + Prisma ORM.  
-* **Kimlik Dogrulama:** MVP'de ownerId tabanli basit oturum (faz 2'de Apple Sign-In/JWT).  
-* **Barindirma:** Vercel (API) + Supabase (DB).  
-* **Test Ortami:** Apple TestFlight.
+## 2. Hedef kullanıcı
 
-## **3. VERITABANI SEMASI (POSTGRESQL / PRISMA)**
+| Persona | İhtiyaç |
+|---------|---------|
+| **Çok evcil hayvan sahibi** | Minnoş (kedi) ve Leo (köpek) gibi profiller arasında geçiş; her biri için ayrı takvim ve belirti |
+| **İlk kez sahip olan** | Aşı takvimi kurma, belirti kaydetme, ne zaman veterinere gitmeli sorusuna Pati Dostu ile yanıt |
+| **Düzenli takip eden** | Beslenme planı, CSV export ile veteriner paylaşımı |
 
-Mevcut Prisma semasina dayanan cekirdek veri modeli:
+---
 
-| **Tablo/Model** | **Alan** | **Tip** | **Kisitlar** | **Aciklama** |
-| --- | --- | --- | --- | --- |
-| **Pet** | id | UUID | PK, auto-gen | Evcil hayvan benzersiz kimligi |
-|  | name | String | Not Null | Hayvan adi |
-|  | species | Enum | CAT/DOG/BIRD | Tur bilgisi |
-|  | breed | String? | Nullable | Irk bilgisi |
-|  | imageUrl | String? | Nullable | Profil gorseli |
-|  | gender | Enum | MALE/FEMALE/UNKNOWN | Cinsiyet |
-|  | birthDate | DateTime? | Nullable | Yas hesaplama |
-|  | weight | Float? | Nullable | Kilo takibi |
-|  | ownerId | String | Not Null | Kaydin sahibi kullanici |
-| **Vaccination** | id | UUID | PK, auto-gen | Asi kaydi kimligi |
-|  | petId | UUID | FK -> Pet(id), Cascade | Hangi hayvana ait oldugu |
-|  | name | String | Not Null | Asi/randevu adi |
-|  | date | DateTime | Not Null | Uygulama tarihi |
-|  | nextDate | DateTime? | Nullable | Sonraki tarih |
-|  | status | Enum | COMPLETED/PENDING | Durum |
-| **SymptomLog** | id | UUID | PK, auto-gen | Belirti kaydi kimligi |
-|  | petId | UUID | FK -> Pet(id), Cascade | Ilgili hayvan |
-|  | symptom | String | Not Null | Belirti basligi |
-|  | description | String? | Nullable | Detay aciklama |
-|  | severity | Enum | LOW/MEDIUM/HIGH | Siddet seviyesi |
-|  | createdAt | DateTime | Default now() | Kayit zamani |
-| **Nutrition** | id | UUID | PK, auto-gen | Beslenme kaydi kimligi |
-|  | petId | UUID | FK -> Pet(id), Cascade | Ilgili hayvan |
-|  | foodName | String | Not Null | Mama/ogun adi |
-|  | amount | String | Not Null | Miktar |
-|  | frequency | Int | Not Null | Gunluk tekrar sayisi |
-|  | feedTime | String | Default "08:30" | Beslenme saati |
-|  | status | Enum | COMPLETED/PENDING | O anki durum |
+## 3. Temel özellikler (MVP)
 
-## **4. API UC NOKTALARI (NEXT.JS ROUTE HANDLERS - REST/JSON)**
+### 3.1 Hayvan profilleri
 
-iOS uygulamasinin haberlesecegi temel endpoint seti:
+- Tür: kedi, köpek, kuş
+- Ad, ırk, cinsiyet, doğum tarihi, kilo, profil fotoğrafı
+- Birden fazla pet; **aktif pet** seçimi (web + mobil)
+- Profil silme (web + mobil)
 
-* **GET /api/pets?ownerId={ownerId}**  
-  * **Islem:** Owner'a ait tum hayvan profillerini listeler.
-* **POST /api/pets**  
-  * **Payload:** `{ "name": "Luna", "species": "CAT", "gender": "FEMALE", "ownerId": "owner_123" }`  
-  * **Islem:** Yeni hayvan profili olusturur.
-* **GET /api/vaccinations?petId={petId}**  
-  * **Islem:** Hayvanin asi/randevu kayitlarini getirir.
-* **POST /api/vaccinations**  
-  * **Payload:** `{ "petId": "uuid", "name": "Kuduz Asisi", "date": "2026-04-20T09:00:00Z", "status": "PENDING" }`
-* **POST /api/symptoms**  
-  * **Payload:** `{ "petId": "uuid", "symptom": "Istahsizlik", "severity": "MEDIUM", "description": "2 gundur az yiyor" }`
-* **POST /api/nutrition**  
-  * **Payload:** `{ "petId": "uuid", "foodName": "Somonlu Mama", "amount": "80g", "frequency": 2, "feedTime": "08:30" }`
+### 3.2 Takvim (aşı & randevu)
 
-## **5. EKRANLAR (SCREENS) VE KULLANICI AKISI (UI/UX)**
+- Hatırlatıcı ekleme: ad, tarih, isteğe bağlı sonraki tarih, not
+- Durum: **Bekliyor** / **Tamamlandı**
+- Aylık takvim görünümü; pet bazlı filtreleme
 
-Arayuz hedefi: temiz, modern, iOS tasarim rehberlerine uygun, tek elle kullanim kolayligi yuksek bir deneyim.
+> **Not:** PRD taslağındaki `/api/vaccinations` uç noktası repoda **`/api/calendar`** olarak uygulandı (aynı `Vaccination` modeli).
 
-1. **Splash & Onboarding**
-   * Uygulama vaadini net anlatan 2-3 adimli onboarding.
-   * "Basla" aksiyonu ile ana akisa gecis.
-2. **Pet List / Dashboard**
-   * Owner'a ait tum hayvan kartlari.
-   * Ustte hizli ozet: bugunku planlanan asi/randevu ve beslenme durumu.
-3. **Pet Detail**
-   * Sekmeli yapi: `Asilar`, `Belirtiler`, `Beslenme`.
-   * Son kayitlar, durum badge'leri ve hizli ekleme butonlari.
-4. **Vaccination Add/Edit**
-   * Tarih secici, durum secimi, not alani.
-   * Gelecek randevu (`nextDate`) tanimi.
-5. **Symptom Log Screen**
-   * Belirti, siddet seviyesi ve aciklama girisi.
-   * Zaman cizelgesi gorunumu.
-6. **Nutrition Planner**
-   * Ogun saati, miktar ve tekrar sayisi tanimlama.
-   * Tamamlandi/Pending isaretleme.
+### 3.3 Sağlık günlüğü (belirtiler)
 
-## **6. USER STORIES & ACCEPTANCE CRITERIA (BACKLOG)**
+- Belirti türü, açıklama, şiddet (Düşük / Orta / Yüksek), tarih
+- Sayfalı liste; pet bazlı filtre
+- **CSV dışa aktarma** (`belirti-kayitlari.csv`) — PDF yerine CSV (MVP kararı)
 
-### **EPIC 1: Hayvan Profili Yonetimi**
+### 3.4 Beslenme
 
-**US 1.1 - Yeni Hayvan Ekleme**
+- Günlük kalori hedefi ve diyet hedefleri (kilo koruma / verme / alma)
+- Öğün planlayıcı: mama adı, miktar, saat, tekrar
+- Öğün onaylama (Tamamlandı / Bekliyor)
+- Beslenme özeti API (`/api/nutrition/summary`)
 
-* **Hikaye:** Bir hayvan sahibi olarak evcil hayvanimi sisteme eklemek istiyorum ki takibini duzenli yapabileyim.  
-* **Kabul Kriterleri:**  
-  * **Given:** Kullanici dashboard ekranindadir.  
-  * **When:** `Ad`, `Tur`, `Cinsiyet` ve `ownerId` bilgilerini girip kaydederse;  
-  * **Then:** Sistem yeni `Pet` kaydini olusturur ve listeyi gunceller.  
-  * **Hata Durumu:** Zorunlu alanlar bos ise inline hata mesaji gorunur.
+### 3.5 Pati Dostu — Yapay Zeka Asistanı
 
-### **EPIC 2: Asi ve Randevu Takibi**
+| Özellik | Detay |
+|---------|--------|
+| **Motor** | Google Gemini (`gemini-2.5-flash`) — REST API |
+| **Entegrasyon** | `POST /api/chat` — backend üzerinden; API key sunucuda |
+| **Kişiselleştirme** | Aktif pet adı, kilo, yaş; son belirtiler, aşılar, öğünler prompt'a eklenir |
+| **Arayüz** | Web `/assistant` + mobil `AssistantScreen` |
+| **Güvenlik** | Günlük/dakikalık kota, mesaj uzunluğu sınırı, tıbbi disclaimer |
+| **Fallback** | API key yoksa veya kota dolunca anahtar kelime tabanlı yanıt |
 
-**US 2.1 - Asi Kaydi Girme**
+---
 
-* **Hikaye:** Hayvanimin asi gecmisini ve gelecek randevusunu tek yerden takip etmek istiyorum.  
-* **Kabul Kriterleri:**  
-  * **Given:** Kullanici pet detay ekraninda `Asilar` sekmesindedir.  
-  * **When:** Asi adi, tarih ve durum secip kaydederse;  
-  * **Then:** `Vaccination` tablosuna kayit atilir ve listede gorunur.  
-  * **And:** `nextDate` girildiyse gelecek planlarda isaretlenir.
+## 4. Teknoloji yığını
 
-### **EPIC 3: Belirti ve Beslenme Kaydi**
+| Katman | Teknoloji |
+|--------|-----------|
+| Web istemci | Next.js 16, React 19, Tailwind CSS 4 |
+| Mobil istemci | Flutter (iOS & Android) |
+| Backend API | Next.js Route Handlers, TypeScript |
+| Veritabanı | PostgreSQL + Prisma 7 |
+| Yapay zeka | Google Gemini API |
+| Kimlik (MVP) | `ownerId` string — Faz 2'de JWT / Apple Sign-In |
+| Barındırma (hedef) | Vercel (web + API) + Supabase (DB) |
 
-**US 3.1 - Belirti Gunlugu Kaydi**
+Detay: [`tech-stack.md`](./tech-stack.md)
 
-* **Hikaye:** Belirti gecmisini kaydedip veteriner randevusunda daha net bilgi vermek istiyorum.  
-* **Kabul Kriterleri:**  
-  * **Given:** Kullanici belirtiler ekranindadir.  
-  * **When:** Belirti ve siddet secip kaydederse;  
-  * **Then:** Kayit `SymptomLog` tablosuna `createdAt` ile eklenir.
+---
 
-**US 3.2 - Beslenme Plani Kaydi**
+## 5. Veri modeli
 
-* **Hikaye:** Gunluk ogun rutinini takip ederek beslenme duzenini kacirmamak istiyorum.  
-* **Kabul Kriterleri:**  
-  * **Given:** Kullanici beslenme ekranindadir.  
-  * **When:** Yemek adi, miktar, saat ve frekans girerse;  
-  * **Then:** Kayit `Nutrition` tablosuna eklenir ve varsayilan durum `PENDING` olur.  
-  * **And:** Kullanici durumu `COMPLETED` olarak guncelleyebilir.
+```
+Pet ──┬── Vaccination (takvim)
+      ├── SymptomLog (belirti)
+      └── Nutrition (beslenme)
+```
 
-## **7. Kapsam Disi (Out of Scope - Faz 1 Icin)**
+| Model | Önemli alanlar |
+|-------|----------------|
+| **Pet** | name, species, breed, imageUrl, gender, birthDate, weight, ownerId |
+| **Vaccination** | name, date, nextDate, status, notes |
+| **SymptomLog** | symptom, description, severity, createdAt |
+| **Nutrition** | foodName, amount, frequency, feedTime, status, notes |
 
-* Gercek zamanli veteriner randevu rezervasyon marketplace'i.
-* IoT/smart collar cihaz entegrasyonlari.
-* Gelismis AI tani/tedavi oneri motoru.
-* Coklu owner rol-izin yonetimi (aile/klinigi kapsayan enterprise model).
+Tam şema: `backend/prisma/schema.prisma` · Diyagram: [`er-diagram.md`](./er-diagram.md)
 
-## **8. Teknik Notlar ve Faz 2 Adaylari**
+---
 
-* Faz 2'de Apple Sign-In + JWT tabanli guclu kimlik dogrulama.
-* Push notification ile asi ve beslenme hatirlaticilari.
-* Offline-first cache (Core Data/SQLite) ve arka plan senkronizasyonu.
-* Test kapsaminda unit + integration + UI test paketinin genisletilmesi.
+## 6. API uç noktaları
+
+| Method | Uç | Açıklama |
+|--------|-----|----------|
+| GET/POST | `/api/pets` | Liste / oluştur |
+| GET/PATCH/DELETE | `/api/pets/[id]` | Detay / güncelle / sil |
+| GET | `/api/pets/[id]/summary` | Dashboard özeti |
+| GET/POST | `/api/calendar` | Aşı & randevu |
+| PATCH/DELETE | `/api/calendar/[id]` | Tekil takvim |
+| GET/POST | `/api/symptoms` | Belirti listesi / ekle |
+| GET | `/api/symptoms/export` | CSV indir |
+| GET/POST | `/api/nutrition` | Beslenme |
+| PATCH/DELETE | `/api/nutrition/[id]` | Öğün güncelle |
+| GET | `/api/nutrition/summary` | Beslenme özeti |
+| POST | `/api/uploads` | Profil fotoğrafı |
+| GET | `/api/chat?petId=` | Pati Dostu meta (karşılama, öneriler) |
+| POST | `/api/chat` | Sohbet mesajı → Gemini yanıtı |
+
+Tüm istekler JSON. Web: `frontend/lib/api.ts` · Mobil: `ApiService`
+
+---
+
+## 7. Ekranlar ve kullanıcı akışı
+
+### Web (`frontend/app/`)
+
+| Sayfa | Rota | İşlev |
+|-------|------|-------|
+| Hayvan profilleri | `/pets` | CRUD, aktif pet, profil sil |
+| Takvim | `/calendar` | Aylık görünüm, hatırlatıcı |
+| Sağlık günlüğü | `/symptoms` | Belirti listesi, ekle, CSV |
+| Beslenme | `/nutrition` | Diyet hedefleri, öğün planı |
+| Pati Dostu AI | `/assistant` | Sohbet, hızlı sorular |
+
+Her sayfada sağ üstte **aktif pet rozeti** (foto, ad, kilo • yaş).
+
+### Mobil (`frontend/mobile/lib/screens/`)
+
+| Ekran | İşlev |
+|-------|-------|
+| `profile_screen` | Pet listesi, fotoğraf, sil |
+| `calendar_screen` | Takvim, hatırlatıcı kartları |
+| `health_diary_screen` | Belirti günlüğü |
+| `nutrition_screen` | Beslenme & öğünler |
+| `assistant_screen` | Pati Dostu sohbet |
+
+Alt navigasyon + `PtHeader` (aktif pet avatarı).
+
+---
+
+## 8. User stories & kabul kriterleri
+
+### EPIC 1 — Hayvan profili
+
+**US 1.1 — Yeni hayvan ekle**
+
+- **Hikâye:** Evcil hayvanımı sisteme ekleyerek takibini düzenli yapmak istiyorum.
+- **Kabul:** Ad + tür + cinsiyet girilince `Pet` oluşur; listede görünür. Zorunlu alan boşsa hata mesajı.
+
+**US 1.2 — Aktif pet seçimi** *(MVP genişlemesi)*
+
+- **Kabul:** Seçilen pet tüm modüllerde filtre olarak kullanılır; localStorage (web) / scope (mobil) ile hatırlanır.
+
+**US 1.3 — Profil silme** *(MVP genişlemesi)*
+
+- **Kabul:** Onay sonrası pet ve ilişkili kayıtlar cascade silinir.
+
+### EPIC 2 — Aşı & randevu
+
+**US 2.1 — Hatırlatıcı ekle**
+
+- **Kabul:** Takvim sayfasından aşı/randevu eklenir; Bekliyor/Tamamlandı güncellenir.
+
+### EPIC 3 — Belirti & beslenme
+
+**US 3.1 — Belirti kaydı**
+
+- **Kabul:** Tarih, tür, şiddet ile `SymptomLog` oluşur; listede görünür.
+
+**US 3.2 — Beslenme planı**
+
+- **Kabul:** Öğün eklenir (PENDING); tamamlandı işaretlenebilir.
+
+**US 3.3 — CSV export**
+
+- **Kabul:** Belirtiler pet bazlı CSV olarak indirilir.
+
+### EPIC 4 — Pati Dostu AI *(çekirdek AI özelliği)*
+
+**US 4.1 — Semptom sorusu**
+
+- **Hikâye:** Kedim iştahsız, ne yapmalıyım diye sormak istiyorum.
+- **Kabul:** Gemini yanıt verir; aktif pet adı kullanılır; Sağlık Günlüğü'ne yönlendirme içerir; disclaimer görünür.
+
+**US 4.2 — Kişiselleştirilmiş karşılama**
+
+- **Kabul:** `GET /api/chat?petId=` ile pet adı, kilo, yaşa göre karşılama ve hızlı sorular döner.
+
+---
+
+## 9. Kapsam dışı (Faz 1)
+
+- Veteriner randevu marketplace'i
+- IoT / akıllı tasma entegrasyonu
+- Otomatik AI teşhis motoru (Pati Dostu tavsiye verir, teşhis koymaz)
+- Çoklu owner / rol-izin yönetimi
+- Push notification (Faz 2)
+- Tam kimlik doğrulama / JWT (Faz 2)
+
+---
+
+## 10. Faz 2 adayları
+
+- Apple Sign-In + JWT
+- Push hatırlatıcıları
+- Offline-first mobil cache
+- Üretim deploy + CI/CD
+- Belirti export PDF
+- iOS native (SwiftUI) — şu an Flutter pilot
+
+---
+
+## 11. Teslim kriterleri eşlemesi (8 hafta projesi)
+
+| Kriter | PetTrack durumu |
+|--------|-----------------|
+| Etkileşimli uygulama | ✅ CRUD + DB + web + mobil |
+| LLM API entegrasyonu | ✅ Gemini `/api/chat` |
+| Frontend / Backend ayrımı | ✅ npm workspaces, REST API |
+| Canlı deploy | ⏳ Planlandı (Vercel + Supabase) |

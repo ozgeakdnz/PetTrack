@@ -1,41 +1,147 @@
 # PetTrack — Tech Stack
 
-## Özet
+> Hangi teknolojiler kullanıldı, neden seçildi ve yapay zeka hem **üründe** hem **geliştirmede** nasıl devreye girdi.
 
-| Katman | Teknoloji | Port (yerel) |
-|--------|-----------|--------------|
-| Web arayüz | Next.js 16, React 19, Tailwind CSS 4, Lucide React | 1575 |
-| REST API | Next.js 16 Route Handlers, Prisma 7, PostgreSQL | 1571 |
-| Mobil istemci | Flutter (iOS / Android) | — |
-| Diary / AI API (opsiyonel) | Python FastAPI, Uvicorn | 1572 |
+---
+
+## Mimari özeti
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        İstemciler                            │
+├─────────────────────────┬────────────────────────────────────┤
+│  frontend/ (1575)       │  frontend/mobile/ (Flutter)        │
+│  Next.js · React 19     │  iOS Simulator · Android Emulator  │
+└────────────┬────────────┴─────────────────┬──────────────────┘
+             │  fetch(apiUrl("/api/..."))   │  ApiService → HTTP
+             └──────────────┬───────────────┘
+                            ▼
+             ┌──────────────────────────────┐
+             │  backend/ (1571)             │
+             │  Next.js Route Handlers      │
+             │  Prisma 7 · middleware CORS  │
+             └──────────────┬───────────────┘
+                            │
+              ┌─────────────┴─────────────┐
+              ▼                           ▼
+        PostgreSQL                  Google Gemini API
+   (yerel / Docker / Supabase)     (Pati Dostu asistanı)
+```
+
+---
+
+## Katman tablosu
+
+| Katman | Teknoloji | Port | Rol |
+|--------|-----------|------|-----|
+| **Web arayüz** | Next.js 16, React 19, Tailwind CSS 4, Lucide React | 1575 | SSR/CSR sayfalar, AppShell navigasyon |
+| **REST API** | Next.js Route Handlers, TypeScript | 1571 | CRUD, dosya yükleme, AI proxy |
+| **ORM** | Prisma 7 | — | Tip güvenli DB erişimi |
+| **Veritabanı** | PostgreSQL 15+ | 5432 / 5433 | Kalıcı veri |
+| **Mobil** | Flutter 3.x, Dart | — | iOS & Android tek kod tabanı |
+| **AI (ürün)** | Google Gemini `gemini-2.5-flash` | — | Pati Dostu sohbet |
+| **AI (geliştirme)** | Cursor + ajan kuralları | — | Kod üretimi, refaktör |
+| **Opsiyonel** | FastAPI (`backend/py/`) | 1572 | Diary / ek AI katmanı (kullanılmıyorsa kapalı) |
+
+---
 
 ## Seçim gerekçeleri
 
-| Karar | Gerekçe |
-|-------|---------|
-| **Monorepo (npm workspaces)** | `frontend/` ve `backend/` ayrı çalıştırılabilir; tek `npm run dev` ile geliştirme |
-| **Next.js Route Handlers** | PRD ile uyum; TypeScript tek dil; Vercel dağıtımına uygun |
-| **Prisma + PostgreSQL** | Tip güvenli ORM; Supabase / yerel PostgreSQL ile uyumlu |
-| **Flutter mobil** | Tek kod tabanı ile iOS ve Android; hızlı MVP prototipi |
-| **FastAPI (backend/py)** | Günlük soru ve AI diary katmanı için hafif Python servisi |
+| Karar | Neden? |
+|-------|--------|
+| **npm workspaces monorepo** | `frontend/` ve `backend/` bağımsız deploy; tek `npm run dev` ile geliştirme |
+| **Next.js Route Handlers** | Tek dil (TypeScript), Vercel uyumu, hızlı REST API |
+| **Prisma + PostgreSQL** | Şema-first, migration, Supabase ile uyum |
+| **Flutter (SwiftUI yerine)** | Tek kod → iOS + Android; MVP hızı; PRD sapması bilinçli |
+| **Gemini (OpenRouter alternatifi)** | Ücretsiz tier, Türkçe kalitesi, basit REST |
+| **API key sunucuda** | `GEMINI_API_KEY` yalnız `backend/.env` — istemciye sızmaz |
+
+---
+
+## Pati Dostu — AI entegrasyonu (ürün)
+
+### Akış
+
+1. Kullanıcı web veya mobilde mesaj yazar
+2. İstemci `POST /api/chat` — `{ message, history, petId? }`
+3. Backend `buildActivePetContext(petId)` ile Prisma'dan pet + son belirtiler + aşılar + öğünler okur
+4. `PATIDOSTU_SYSTEM` + pet bağlamı + geçmiş → Gemini `generateContent`
+5. Yanıt JSON `{ reply }` olarak döner
+
+### Dosyalar
+
+| Dosya | Rol |
+|-------|-----|
+| `backend/app/api/chat/route.ts` | POST/GET handler, kota, Gemini çağrısı |
+| `backend/lib/pati-dostu-prompt.ts` | System prompt, kişiselleştirme, pet bağlamı |
+| `frontend/app/assistant/page.tsx` | Web sohbet UI |
+| `frontend/mobile/lib/screens/assistant_screen.dart` | Mobil sohbet UI |
+
+### Kota & güvenlik
+
+| Ayar | Varsayılan | Env |
+|------|------------|-----|
+| Günlük Gemini çağrısı | 15 | `GEMINI_MAX_DAILY_REQUESTS` |
+| Dakikada istek (IP) | 4 | `GEMINI_MAX_REQUESTS_PER_MINUTE` |
+| Mesaj uzunluğu | 500 karakter | `GEMINI_MAX_INPUT_CHARS` |
+| Yanıt token | 640 | `GEMINI_MAX_OUTPUT_TOKENS` |
+| Thinking budget | 0 (kapalı) | `GEMINI_THINKING_BUDGET` |
+
+> **Önemli:** Gemini 2.5 Flash varsayılan "thinking" modu `maxOutputTokens` içinden yer kaplar; `thinkingBudget: 0` ile kapatıldı — aksi halde yanıtlar yarım kalır.
+
+### Fallback
+
+API key yok, kota dolmuş veya Gemini hata verirse → `buildReply()` anahtar kelime tabanlı Türkçe yanıt.
+
+---
 
 ## Geliştirmede yapay zeka kullanımı
 
-- **Planlama:** `prodocs/PRD.md` ve `prodocs/Plan.md` referans alınarak adım adım yürütme.
-- **Kod üretimi:** Cursor ajan kuralları `prodocs/agent/rules/` altında; UI için `DesignSystem.md`, API için `backend-api` kuralları.
-- **Tasarım tutarlılığı:** Tailwind + mevcut bileşen dili; yeni ekranlar `AppShell` ve teal/slate paleti ile hizalanır.
-- **Hata ayıklama:** Prisma migration, CORS ve env (`DATABASE_URL`, `NEXT_PUBLIC_API_URL`) kontrol listesi `prodocs/Progress.md` içinde kayıtlı.
+| Aşama | Nasıl? |
+|-------|--------|
+| **Planlama** | PRD + Plan.md referans; Cursor Agent ile adım adım |
+| **Kod üretimi** | `prodocs/agent/rules/` — workspace, react, backend-api, responsive kuralları |
+| **UI tutarlılığı** | DesignSystem.md + mevcut bileşen dili (teal/slate, rounded-2xl) |
+| **Hata ayıklama** | Progress.md kayıtları; env checklist (DATABASE_URL, CORS, GEMINI) |
+| **Dokümantasyon** | prodocs/ klasörü; her sprint sonu Progress güncellemesi |
+
+---
 
 ## Ortam değişkenleri
 
-Kök `.env.example` dosyasına bakın. Gerçek anahtarlar repoya commit edilmez.
+Şablon: kök [`.env.example`](../.env.example)
 
-## Dağıtım (önerilen)
+| Değişken | Paket | Zorunlu |
+|----------|-------|---------|
+| `DATABASE_URL` | backend | ✅ |
+| `FRONTEND_ORIGIN` | backend | ✅ (CORS) |
+| `GEMINI_API_KEY` | backend | Pati Dostu için |
+| `GEMINI_MODEL` | backend | Varsayılan: `gemini-2.5-flash` |
+| `NEXT_PUBLIC_API_URL` | frontend | ✅ |
+| `NEXT_PUBLIC_PY_API_URL` | frontend | Opsiyonel (py API) |
 
-| Bileşen | Hedef |
-|---------|--------|
-| `frontend/` | Vercel (statik + SSR) |
-| `backend/` | Vercel veya Node hosting |
-| PostgreSQL | Supabase veya yönetilen PostgreSQL |
-| `frontend/mobile/` | TestFlight (iOS) / Play Store (Android) |
-| `backend/py/` | Railway, Render veya ayrı container |
+---
+
+## Dağıtım hedefi
+
+| Bileşen | Platform | Not |
+|---------|----------|-----|
+| `frontend/` | Vercel | `NEXT_PUBLIC_API_URL` = canlı API |
+| `backend/` | Vercel | `DATABASE_URL`, `FRONTEND_ORIGIN`, `GEMINI_*` |
+| PostgreSQL | Supabase / Neon | `prisma migrate deploy` |
+| `frontend/mobile/` | TestFlight / APK | API URL build config |
+
+Build: `DATABASE_URL="..." npm run build` (backend import anında doğrular)
+
+---
+
+## PRD sapmaları (bilinçli)
+
+| PRD taslağı | Gerçek uygulama |
+|-------------|-----------------|
+| iOS native (SwiftUI) | Flutter + Next.js web |
+| `/api/vaccinations` | `/api/calendar` |
+| PDF belirti export | CSV export |
+| Gelişmiş AI tanı | Pati Dostu tavsiye asistanı (Gemini) |
+
+Detay: [`Progress.md`](./Progress.md)
