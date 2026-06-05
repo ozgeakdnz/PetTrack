@@ -1,0 +1,13 @@
+---
+description: Frontend — sayfalar, bileşenler, API istemcisi
+globs: frontend/**/*
+alwaysApply: false
+---
+
+# Frontend (`frontend/`)
+
+- Sayfalar ve layout: `frontend/app/`. Paylaşılan UI: `frontend/components/`.
+- **Sunucuya erişim:** yalnızca `apiUrl("/api/...")` ile; ortam: `NEXT_PUBLIC_API_URL`.
+- İstemci bileşenlerinde `"use client"` satırı dosyanın en üstünde, tırnaksız boşluk olmadan olmalı.
+- Stil: Tailwind v4 (`globals.css` içinde `@import "tailwindcss"`). Mevcut tasarım diline (rounded, slate/teal paleti) uy.
+- `next/image` için harici domain gerekiyorsa `frontend/next.config.ts` içindeki `images.remotePatterns` güncellenmeli.

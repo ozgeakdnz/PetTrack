@@ -1,14 +1,29 @@
 import { NextResponse } from "next/server";
 
+type ChatHistoryItem = {
+  role?: string;
+  content?: string;
+};
+
 type ChatRequest = {
   message?: string;
+  history?: ChatHistoryItem[];
 };
 
 const MODEL = "gemini-1.5-flash";
 const MAX_INPUT_CHARS = 500;
-const MAX_REQUESTS_PER_WINDOW = 5;
-const WINDOW_MS = 60 * 1000; // 1 dakika
+const MAX_REQUESTS_PER_WINDOW = 10;
+const WINDOW_MS = 60 * 1000;
 const requestLog = new Map<string, number[]>();
+
+const SUGGESTIONS = [
+  "Kedim bugün çok iştahsız, ne yapmalıyım?",
+  "Köpeklerde aşı sonrası halsizlik normal mi?",
+  "Yavru kuşların beslenme sıklığı nedir?",
+];
+
+const DISCLAIMER =
+  "Bu yapay zeka tavsiyeleri profesyonel teşhis ile yer değiştiremez. Acil durumlarda lütfen en yakın veteriner kliniğine başvurun.";
 
 function buildReply(input: string) {
   const text = input.toLowerCase();
@@ -35,6 +50,10 @@ function buildReply(input: string) {
 
   if (text.includes("yemek")) {
     return "Yemek düzeninde aynı saatleri korumak sindirimi destekler. İştah azalması, kusma veya dışkıda belirgin değişim olursa günlük kayda alıp veterinerle paylaş.";
+  }
+
+  if (text.includes("kuş") || text.includes("kus ") || text.includes("yavru")) {
+    return "Yavru kuşlarda kısa aralıklarla az miktarda mama vermek daha güvenlidir. Sıcaklık, dışkı ve aktivite değişimlerini günlük kayda al; belirgin halsizlikte veterinere danış.";
   }
 
   if (text.includes("genel muayene") || text.includes("muayene") || text.includes("kontrol")) {
@@ -79,15 +98,26 @@ function getRateLimitState(clientKey: string, now: number) {
   return { limited: true, retryAfterSec: Math.ceil(retryAfterMs / 1000) };
 }
 
-async function askGemini(message: string, apiKey: string) {
+function formatHistoryForPrompt(history: ChatHistoryItem[]) {
+  return history
+    .filter((item) => item.content?.trim() && (item.role === "user" || item.role === "assistant"))
+    .slice(-8)
+    .map((item) => `${item.role === "user" ? "Kullanıcı" : "Asistan"}: ${item.content!.trim()}`)
+    .join("\n");
+}
+
+async function askGemini(message: string, apiKey: string, history: ChatHistoryItem[]) {
+  const historyBlock = formatHistoryForPrompt(history);
   const prompt = [
-    "Sen Türkçe konuşan bir AI asistansın.",
-    "Evcil hayvan sağlığı, uygulama kullanımı ve genel sorularda yardımcı ol.",
-    "Kısa, güvenli ve pratik öneriler ver.",
-    "Tıbbi konularda kesin teşhis koyma; acil risk varsa veterinere yönlendir.",
-    "",
-    `Kullanıcı mesajı: ${message}`,
-  ].join("\n");
+    "Sen Türkçe konuşan Pati Dostu adlı bir evcil hayvan bakım asistansın.",
+    "Evcil hayvan sağlığı, beslenme, aşı takibi ve uygulama kullanımında yardımcı ol.",
+    "Kısa, sıcak, güvenli ve pratik öneriler ver (en fazla 3-4 cümle).",
+    "Tıbbi teşhis koyma; acil risk varsa veterinere yönlendir.",
+    historyBlock ? `\nÖnceki konuşma:\n${historyBlock}` : "",
+    `\nKullanıcı mesajı: ${message}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
@@ -97,8 +127,8 @@ async function askGemini(message: string, apiKey: string) {
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 180,
+          temperature: 0.5,
+          maxOutputTokens: 280,
           topP: 0.9,
         },
       }),
@@ -123,10 +153,19 @@ async function askGemini(message: string, apiKey: string) {
   return text;
 }
 
+export async function GET() {
+  return NextResponse.json({
+    assistant: "Pati Dostu",
+    suggestions: SUGGESTIONS,
+    disclaimer: DISCLAIMER,
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as ChatRequest;
     const message = (body.message ?? "").trim();
+    const history = Array.isArray(body.history) ? body.history : [];
 
     if (!message) {
       return NextResponse.json({ error: "Mesaj boş olamaz." }, { status: 400 });
@@ -150,7 +189,7 @@ export async function POST(req: Request) {
     let reply: string;
     if (geminiApiKey) {
       try {
-        reply = await askGemini(message, geminiApiKey);
+        reply = await askGemini(message, geminiApiKey, history);
       } catch {
         reply = buildReply(message);
       }

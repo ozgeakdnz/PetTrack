@@ -1,28 +1,45 @@
 "use client";
 
 import { apiUrl } from "@/lib/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   Calendar,
+  Camera,
   Plus,
   ShieldCheck,
   Syringe,
   UserRoundCog,
   Weight,
 } from "lucide-react";
-import Image from "next/image";
 
 type Pet = {
   id: string;
   name: string;
   species: "CAT" | "DOG" | "BIRD";
   breed: string | null;
+  imageUrl: string | null;
   gender: "MALE" | "FEMALE" | "UNKNOWN";
   birthDate: string | null;
   weight: number | null;
   ownerId: string;
 };
+
+const SPECIES_FALLBACK_IMAGE: Record<Pet["species"], string> = {
+  CAT: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=800&q=80",
+  DOG: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80",
+  BIRD: "https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&w=800&q=80",
+};
+
+function resolvePetImageSrc(pet: Pet | null, species: Pet["species"] | undefined, previewUrl: string | null): string {
+  if (previewUrl) return previewUrl;
+  if (pet?.imageUrl) {
+    if (pet.imageUrl.startsWith("http")) return pet.imageUrl;
+    // Aynı origin üzerinden proxy (next.config rewrites → backend /uploads)
+    return pet.imageUrl.startsWith("/") ? pet.imageUrl : `/${pet.imageUrl}`;
+  }
+  return SPECIES_FALLBACK_IMAGE[species ?? "CAT"];
+}
 
 async function readApiResponse<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") ?? "";
@@ -64,6 +81,9 @@ export default function PetsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPolicyDetail, setShowPolicyDetail] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [summary, setSummary] = useState({
     lastVaccine: "Yükleniyor...",
     weightStatus: "Yükleniyor...",
@@ -112,6 +132,13 @@ export default function PetsPage() {
       return;
     }
     void loadSummary(activePetId);
+  }, [activePetId]);
+
+  useEffect(() => {
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
   }, [activePetId]);
 
   async function loadPets() {
@@ -234,6 +261,61 @@ export default function PetsPage() {
     setShowPolicyDetail(true);
   }
 
+  async function handleImageChange(file: File) {
+    if (!activePet) return;
+
+    setError(null);
+    setNotice(null);
+
+    const preview = URL.createObjectURL(file);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return preview;
+    });
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch(apiUrl("/api/uploads"), {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await readApiResponse<{ fileUrl?: string; error?: string }>(uploadRes);
+
+      if (!uploadRes.ok || !uploadData.fileUrl) {
+        throw new Error(uploadData.error ?? "Resim yüklenemedi.");
+      }
+
+      const patchRes = await fetch(apiUrl(`/api/pets/${activePet.id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: uploadData.fileUrl }),
+      });
+      const patchData = await readApiResponse<{ pet?: Pet; error?: string }>(patchRes);
+
+      if (!patchRes.ok || !patchData.pet) {
+        throw new Error(patchData.error ?? "Profil resmi kaydedilemedi.");
+      }
+
+      setPets((prev) => prev.map((pet) => (pet.id === patchData.pet!.id ? patchData.pet! : pet)));
+      setImagePreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setNotice("Profil resmi güncellendi.");
+    } catch (err) {
+      setImagePreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setError(err instanceof Error ? err.message : "Resim güncellenemedi.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }
+
   const türEtiketi =
     activePet?.species === "CAT" ? "Kedi" : activePet?.species === "DOG" ? "Köpek" : activePet?.species === "BIRD" ? "Kuş" : "-";
   const cinsiyetEtiketi =
@@ -245,12 +327,7 @@ export default function PetsPage() {
           ? "Bilinmiyor"
           : "-";
   const aktifTür = isEditing ? form.species : activePet?.species;
-  const profilResmi =
-    aktifTür === "DOG"
-      ? "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80"
-      : aktifTür === "BIRD"
-        ? "https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&w=800&q=80"
-        : "https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=800&q=80";
+  const profilResmi = resolvePetImageSrc(activePet, aktifTür, imagePreview);
 
   return (
     <section className="mx-auto w-full max-w-7xl space-y-6">
@@ -283,14 +360,35 @@ export default function PetsPage() {
 
       <article className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
-          <div className="h-56 overflow-hidden rounded-[2rem] bg-slate-200 sm:h-full">
-            <Image
-              key={`${activePetId ?? "default-pet-image"}-${aktifTür ?? "CAT"}`}
+          <div className="group relative h-56 overflow-hidden rounded-[2rem] bg-slate-200 sm:h-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={profilResmi}
               src={profilResmi}
               alt={activePet ? `${activePet.name} profil resmi` : "Profil resmi"}
-              width={800}
-              height={1000}
               className="h-full w-full object-cover"
+            />
+            <button
+              type="button"
+              disabled={!activePet || isUploadingImage}
+              onClick={() => imageInputRef.current?.click()}
+              className="absolute inset-0 flex items-end justify-end p-3 disabled:cursor-not-allowed"
+            >
+              <span className="inline-flex items-center gap-2 rounded-full bg-teal-700/90 px-4 py-2 text-sm font-medium text-white shadow-lg">
+                <Camera size={16} />
+                {isUploadingImage ? "Yükleniyor..." : "Resmi Değiştir"}
+              </span>
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void handleImageChange(file);
+              }}
             />
           </div>
 

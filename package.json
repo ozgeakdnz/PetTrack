@@ -7,15 +7,15 @@
     "dev:all": "concurrently -n backend,frontend,py -c blue,green,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\" \"npm run dev:py\"",
     "dev:backend": "npm run dev -w backend",
     "dev:frontend": "npm run dev -w frontend",
-    "dev:py": "cd backend-py && python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 1572",
+    "dev:py": "cd backend/py && python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 1572",
     "build": "npm run build -w backend && npm run build -w frontend",
     "lint": "npm run lint -w frontend && npm run lint -w backend",
     "prisma:generate": "npm run prisma:generate -w backend",
     "prisma:migrate": "npm run prisma:migrate -w backend",
     "prisma:push": "npm run prisma:push -w backend",
     "prisma:studio": "npm run prisma:studio -w backend",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:up": "docker compose -f backend/docker-compose.yml up -d",
+    "db:down": "docker compose -f backend/docker-compose.yml down"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

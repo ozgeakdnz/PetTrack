@@ -27,6 +27,7 @@ export async function GET(req: Request) {
           },
         },
         orderBy: { date: "asc" },
+        include: { pet: { select: { name: true } } },
       }),
       prisma.vaccination.findMany({
         where: {
@@ -34,10 +35,24 @@ export async function GET(req: Request) {
         },
         orderBy: { date: "desc" },
         take: 6,
+        include: { pet: { select: { name: true } } },
       }),
     ]);
 
-    return NextResponse.json({ events, reminders });
+    const mapEvent = (row: (typeof events)[number]) => ({
+      id: row.id,
+      petId: row.petId,
+      petName: row.pet.name,
+      name: row.name,
+      date: row.date,
+      status: row.status,
+      notes: row.notes,
+    });
+
+    return NextResponse.json({
+      events: events.map(mapEvent),
+      reminders: reminders.map(mapEvent),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Takvim verileri alınamadı.";
     return NextResponse.json({ error: message }, { status: 500 });

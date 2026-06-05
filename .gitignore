@@ -5,9 +5,12 @@ node_modules/
 .next/
 out/
 
-# Env
+# Env (gerçek anahtarlar repoya girmez)
 .env
 .env*.local
+backend/.env
+frontend/.env
+backend/py/.env
 
 # Debug / OS
 .DS_Store
@@ -15,9 +18,6 @@ out/
 
 # TypeScript
 *.tsbuildinfo
-
-# Prisma
-# (migrations klasörünü tutuyoruz; istenirse prisma/migrations açıkça eklenir)
 
 # Logs
 npm-debug.log*
@@ -27,16 +27,24 @@ yarn-error.log*
 # Vercel
 .vercel
 
-# Flutter (mobile/)
-mobile/.dart_tool/
-mobile/build/
+# Flutter (frontend/mobile/)
+frontend/mobile/.dart_tool/
+frontend/mobile/build/
+frontend/mobile/.flutter-plugins-dependencies
 
-# Python (backend-py/)
-backend-py/.venv/
-backend-py/__pycache__/
-backend-py/**/__pycache__/
-backend-py/.env
+# Python (backend/py/)
+backend/py/.venv/
+backend/py/__pycache__/
+backend/py/**/__pycache__/
 
-# IDE
+# IDE / editor (teslim yapısı dışı)
 .idea/
 .vscode/
+.cursor/
+
+# iOS Pods (yeniden pod install ile üretilir)
+frontend/mobile/ios/Pods/
+frontend/mobile/ios/Podfile.lock
+
+# Android local
+frontend/mobile/android/local.properties

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ClipboardList, Dog, Menu, Salad, ShieldPlus, X } from "lucide-react";
+import { CalendarDays, ClipboardList, Dog, Menu, Salad, ShieldPlus, Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/calendar", label: "Takvim", icon: CalendarDays },
   { href: "/symptoms", label: "Sağlık Günlüğü", icon: ClipboardList },
   { href: "/nutrition", label: "Beslenme", icon: Salad },
+  { href: "/assistant", label: "AI Asistanı", icon: Sparkles },
 ];
 
 type AppShellProps = {
@@ -107,10 +108,16 @@ function SidebarContent({ activePath, onNavigate }: SidebarContentProps) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-semibold text-slate-900">Pati Dostu</p>
-        <p className="mt-1 text-xs leading-5 text-slate-600">Günlük takip ve akıllı öneriler için her zaman yanında.</p>
-      </div>
+      <Link
+        href="/assistant"
+        onClick={onNavigate}
+        className="mt-auto block rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-50 p-4 transition hover:border-teal-300 hover:shadow-sm"
+      >
+        <p className="text-sm font-semibold text-teal-900">Pati Dostu</p>
+        <p className="mt-1 text-xs leading-5 text-teal-700/80">
+          Yapay zeka asistanına git — semptom analizi ve bakım tavsiyesi al.
+        </p>
+      </Link>
     </>
   );
 }

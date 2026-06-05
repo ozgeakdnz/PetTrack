@@ -5,3 +5,5 @@ Next.js arayüzü: `app/` sayfaları, `components/`, `lib/api.ts` (backend taban
 **Geliştirme:** `npm run dev` (kökten workspace ile) veya bu dizinde `npm run dev` — port **1575**.
 
 API istekleri varsayılan olarak `http://localhost:1571` üzerinden gider; üretimde `NEXT_PUBLIC_API_URL` tanımlayın.
+
+**Mobil (Flutter):** `mobile/` alt dizini — `cd mobile && flutter run`

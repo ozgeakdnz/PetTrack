@@ -1,5 +1,5 @@
 /**
- * Python FastAPI backend (backend-py). Varsayılan port 1572.
+ * Python FastAPI backend (backend/py). Varsayılan port 1572.
  * Üretimde `NEXT_PUBLIC_PY_API_URL` tanımlayın.
  */
 export function pyApiUrl(path: string): string {

@@ -1,89 +1,82 @@
-## PetTrack 
+# PetTrack
 
-Monorepo: **`frontend/`** (Next.js + Tailwind + arayüz) ve **`backend/`** (Next.js Route Handlers + Prisma + PostgreSQL) ayrı paketlerdir.
+Evcil hayvan sahipleri için profil, aşı/randevu, belirti günlüğü ve beslenme takibi. Web arayüzü (Next.js) + REST API (Next.js + Prisma + PostgreSQL) + opsiyonel Flutter mobil istemci.
 
-### Gereksinimler
+## Klasör yapısı
+
+```
+frontend/          Web arayüzü (Next.js)
+  mobile/          Flutter mobil uygulama (iOS / Android)
+backend/           REST API + Prisma + PostgreSQL
+  py/              Opsiyonel FastAPI (günlük soru / AI)
+prodocs/           PRD, plan, tasarım sistemi, ilerleme kaydı, AI referansları
+```
+
+## Gereksinimler
 
 - Node.js 20+
-- PostgreSQL (`DATABASE_URL`)
+- PostgreSQL
+- (Mobil) Flutter SDK
+- (Opsiyonel Python API) Python 3.11+
 
-### Ortam değişkenleri
-
-**`backend/.env`** (veya kökten çalıştırırken backend sürecinin gördüğü env):
-
-- `DATABASE_URL` — PostgreSQL bağlantı dizesi
-
-**`frontend/.env.local`** (isteğe bağlı; varsayılanlar yerel geliştirme içindir):
-
-- `NEXT_PUBLIC_API_URL` — API tabanı (varsayılan: `http://localhost:1571`)
-- Backend CORS için **`backend/.env`** içinde `FRONTEND_ORIGIN=http://localhost:1575` (varsayılan zaten bu)
-
-### Kurulum
+## Kurulum
 
 ```bash
 npm install
+cp .env.example backend/.env      # DATABASE_URL düzenle
+cp .env.example frontend/.env     # NEXT_PUBLIC_* satırlarını kopyala
 npm run prisma:generate
-```
-
-### Veritabanı
-
-**Seçenek A — Yerel PostgreSQL (Homebrew vb.)**
-
-```bash
-# macOS: genelde kullanıcı adınızla bağlanır
-createdb pettrack
-cp backend/.env.example backend/.env   # DATABASE_URL satırını düzenleyin
 npm run prisma:migrate
-```
-
-**Seçenek B — Docker Compose**
-
-```bash
-docker compose up -d
-# backend/.env → DATABASE_URL="postgresql://pettrack:pettrack@localhost:5433/pettrack"
-npm run prisma:migrate
-```
-
-Şema değişikliklerinden sonra migration uygulayın. Tabloları görmek için: `npm run prisma:studio`
-
-**Not:** `backend/.env` içindeki `DATABASE_URL` değiştiyse backend sürecini yeniden başlatın (`npm run dev`).
-
-
-İki servisi birlikte çalıştırır (`backend` :1571, `frontend` :1575):
-
-```bash
 npm run dev
 ```
 
-Ayrı ayrı:
+- **Arayüz:** http://localhost:1575  
+- **API:** http://localhost:1571/api  
+
+## Veritabanı
 
 ```bash
-npm run dev:backend
-npm run dev:frontend
+createdb pettrack                    # yerel PostgreSQL
+# veya
+npm run db:up                        # Docker (backend/docker-compose.yml, port 5433)
+npm run prisma:migrate
+npm run prisma:studio                # tabloları görüntüle
 ```
 
-Arayüz: [http://localhost:1575](http://localhost:1575) — API: [http://localhost:1571/api](http://localhost:1571/api)
+## Mobil uygulama
 
-### Üretim derlemesi
+```bash
+cd frontend/mobile
+flutter pub get
+flutter run
+```
 
-`npm run build` kökten çalıştırılmadan önce **`DATABASE_URL`** ortam değişkeninin set edilmiş olması gerekir (backend paketi `lib/prisma.ts` içinde doğrular). Örnek:
+## Deploy (özet)
+
+| Bileşen | Öneri |
+|---------|--------|
+| `frontend/` | Vercel — `NEXT_PUBLIC_API_URL` = canlı API URL |
+| `backend/` | Vercel — `DATABASE_URL`, `FRONTEND_ORIGIN` set |
+| PostgreSQL | Supabase veya yönetilen PostgreSQL |
+| `frontend/mobile/` | TestFlight / Play Store build |
+| `backend/py/` | Railway / Render (opsiyonel) |
+
+Üretim build:
 
 ```bash
 DATABASE_URL="postgresql://..." npm run build
 ```
 
-### Prisma (sadece backend)
+## Dokümantasyon
 
-```bash
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:studio
-```
+Tüm zorunlu belgeler `prodocs/` altında:
 
-### Teknolojiler
+| Dosya | İçerik |
+|-------|--------|
+| `PRD.md` | Ürün gereksinimleri |
+| `tech-stack.md` | Teknoloji seçimleri ve AI kullanımı |
+| `Plan.md` | Teknik adımlar ve user story’ler |
+| `DesignSystem.md` | UI kuralları |
+| `Progress.md` | İlerleme ve karar kaydı |
 
-- Next.js 16 (App Router) — iki workspace
-- Tailwind CSS 4, Lucide-React (frontend)
-- Prisma ORM, `pg` (backend)
-
-Detaylı yürütme adımları için kökteki `plan.md` dosyasına bakabilirsiniz.
+Ortam şablonu: kök `.env.example` (gerçek anahtarlar commit edilmez).
