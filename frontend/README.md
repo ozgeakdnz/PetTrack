@@ -4,9 +4,11 @@ Next.js 16 arayüzü — evcil hayvan profili, takvim, sağlık günlüğü, bes
 
 | | |
 |---|---|
-| **Port** | 1575 |
+| **Port (yerel)** | 1575 |
+| **Canlı** | https://pettrack-frontend.vercel.app |
 | **Stack** | Next.js · React 19 · Tailwind CSS 4 · Lucide |
-| **API** | `NEXT_PUBLIC_API_URL` → backend (1571) |
+| **API** | `NEXT_PUBLIC_API_URL` → backend |
+| **Deploy** | Vercel — root `frontend/` · rehber: [`../prodocs/DEPLOY-vercel.md`](../prodocs/DEPLOY-vercel.md) |
 
 ---
 
@@ -44,10 +46,16 @@ npm run dev
 npm run dev -w frontend
 ```
 
-`.env`:
+`.env` (yerel):
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:1571
+```
+
+Canlı (Vercel `pettrack-frontend`):
+
+```env
+NEXT_PUBLIC_API_URL=https://pettrack-backend.vercel.app
 ```
 
 ---

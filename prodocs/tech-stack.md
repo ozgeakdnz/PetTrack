@@ -25,7 +25,7 @@
               ┌─────────────┴─────────────┐
               ▼                           ▼
         PostgreSQL                  Google Gemini API
-   (yerel / Docker / Supabase)     (Pati Dostu asistanı)
+   (yerel / Docker / Neon)     (Pati Dostu asistanı)
 ```
 
 ---
@@ -51,7 +51,7 @@
 |-------|--------|
 | **npm workspaces monorepo** | `frontend/` ve `backend/` bağımsız deploy; tek `npm run dev` ile geliştirme |
 | **Next.js Route Handlers** | Tek dil (TypeScript), Vercel uyumu, hızlı REST API |
-| **Prisma + PostgreSQL** | Şema-first, migration, Supabase ile uyum |
+| **Prisma + PostgreSQL** | Şema-first, migration, Neon ile canlı deploy |
 | **Flutter (SwiftUI yerine)** | Tek kod → iOS + Android; MVP hızı; PRD sapması bilinçli |
 | **Gemini (OpenRouter alternatifi)** | Ücretsiz tier, Türkçe kalitesi, basit REST |
 | **API key sunucuda** | `GEMINI_API_KEY` yalnız `backend/.env` — istemciye sızmaz |
@@ -122,14 +122,17 @@ API key yok, kota dolmuş veya Gemini hata verirse → `buildReply()` anahtar ke
 
 ---
 
-## Dağıtım hedefi
+## Dağıtım (canlı)
 
-| Bileşen | Platform | Not |
-|---------|----------|-----|
-| `frontend/` | Vercel | `NEXT_PUBLIC_API_URL` = canlı API |
-| `backend/` | Vercel | `DATABASE_URL`, `FRONTEND_ORIGIN`, `GEMINI_*` |
-| PostgreSQL | Supabase / Neon | `prisma migrate deploy` |
-| `frontend/mobile/` | TestFlight / APK | API URL build config |
+| Bileşen | Platform | URL / Not |
+|---------|----------|-----------|
+| `frontend/` | Vercel `pettrack-frontend` | https://pettrack-frontend.vercel.app |
+| `backend/` | Vercel `pettrack-backend` | https://pettrack-backend.vercel.app |
+| PostgreSQL | Neon `pettrack-db` | eu-central-1 · `prisma db push` |
+| Profil fotoğrafları | Vercel Blob | Storage → backend projesine bağla |
+| `frontend/mobile/` | TestFlight / APK | `NEXT_PUBLIC_API_URL` = canlı backend |
+
+Rehber: [`DEPLOY-vercel.md`](./DEPLOY-vercel.md)
 
 Build: `DATABASE_URL="..." npm run build` (backend import anında doğrular)
 

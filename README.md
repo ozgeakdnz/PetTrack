@@ -12,12 +12,13 @@ Next.js · Flutter · TypeScript · Prisma · PostgreSQL · Google Gemini · MVP
 
 | Bileşen | Durum | Adres |
 |---------|--------|--------|
-| **Web arayüz** | ⏳ Deploy planlanıyor | `https://pettrack.vercel.app` *(yakında)* |
-| **REST API** | ⏳ Deploy planlanıyor | `https://pettrack-api.vercel.app` *(yakında)* |
+| **Web arayüz** | ✅ Canlı | [https://pettrack-frontend.vercel.app](https://pettrack-frontend.vercel.app) |
+| **REST API** | ✅ Canlı | [https://pettrack-backend.vercel.app](https://pettrack-backend.vercel.app) |
+| **Veritabanı** | ✅ Neon PostgreSQL | `pettrack-db` (eu-central-1) |
 | **Yerel web** | ✅ Çalışıyor | http://localhost:1575 |
 | **Yerel API** | ✅ Çalışıyor | http://localhost:1571/api |
 
-> Deploy tamamlandığında bu bölüm güncellenecek. Yerel demo için [Kurulum](#-yerel-geliştirme) bölümüne bakın.
+> Canlı ortam kurulum adımları: [`prodocs/DEPLOY-vercel.md`](./prodocs/DEPLOY-vercel.md). Yerel demo için [Kurulum](#-yerel-geliştirme) bölümüne bakın.
 
 ---
 
@@ -131,7 +132,7 @@ AI yanıtı içerir:
            ▼                           ▼
    ┌───────────────┐           ┌───────────────┐
    │  PostgreSQL   │           │  Google Gemini │
-   │  (Supabase)   │           │  Pati Dostu AI │
+   │  (Neon)       │           │  Pati Dostu AI │
    └───────────────┘           └───────────────┘
 ```
 
@@ -150,7 +151,7 @@ Frontend, Gemini veya veritabanına **doğrudan bağlanmaz**. Tüm istekler back
 | Yapay zeka | Google Gemini API (`gemini-2.5-flash`) |
 | İkonlar | Lucide React (web) · Material Icons (mobil) |
 | Monorepo | npm workspaces |
-| Deploy (hedef) | Vercel + Supabase |
+| Deploy | Vercel (frontend + backend) + Neon PostgreSQL |
 
 Detaylı gerekçeler: [`prodocs/tech-stack.md`](./prodocs/tech-stack.md)
 
@@ -304,7 +305,8 @@ NEXT_PUBLIC_API_URL=http://localhost:1571
 ## 📈 Yol Haritası
 
 ### v1.1
-- [ ] Vercel + Supabase canlı deploy
+- [x] Vercel + Neon PostgreSQL canlı deploy
+- [ ] Vercel Blob (profil fotoğrafı yükleme — canlıda Storage kurulumu)
 - [ ] JWT / Apple Sign-In kimlik doğrulama
 - [ ] `ownerId` erişim kontrolleri
 
@@ -323,20 +325,21 @@ NEXT_PUBLIC_API_URL=http://localhost:1571
 
 ## ✅ Mevcut Durum
 
-**MVP v1.0 — Geliştirme tamamlandı, deploy bekliyor**
+**MVP v1.0 — Canlıda**
 
 | Bileşen | Durum |
 |---------|--------|
-| Backend REST API | ✅ |
-| PostgreSQL + Prisma | ✅ |
-| Web arayüz (5 modül) | ✅ |
+| Backend REST API | ✅ [pettrack-backend.vercel.app](https://pettrack-backend.vercel.app) |
+| PostgreSQL + Prisma (Neon) | ✅ |
+| Web arayüz (5 modül) | ✅ [pettrack-frontend.vercel.app](https://pettrack-frontend.vercel.app) |
 | Flutter mobil (5 ekran) | ✅ |
 | Pati Dostu AI (Gemini) | ✅ |
 | Kişiselleştirilmiş AI meta | ✅ |
 | Aktif pet & çoklu profil | ✅ |
 | CSV belirti export | ✅ |
 | prodocs dokümantasyon | ✅ |
-| Canlı deploy | ⏳ |
+| Canlı deploy (Vercel + Neon) | ✅ |
+| Profil fotoğrafı (Vercel Blob) | ⏳ Storage kurulumu gerekli |
 
 ---
 
@@ -348,6 +351,7 @@ NEXT_PUBLIC_API_URL=http://localhost:1571
 | [`prodocs/tech-stack.md`](./prodocs/tech-stack.md) | Teknoloji ve AI entegrasyonu |
 | [`prodocs/Plan.md`](./prodocs/Plan.md) | Teknik adımlar, user story'ler |
 | [`prodocs/DesignSystem.md`](./prodocs/DesignSystem.md) | UI kuralları |
+| [`prodocs/DEPLOY-vercel.md`](./prodocs/DEPLOY-vercel.md) | Vercel + Neon canlı deploy rehberi |
 | [`prodocs/Progress.md`](./prodocs/Progress.md) | İlerleme günlüğü |
 | [`prodocs/README.md`](./prodocs/README.md) | AI ajan referans indeksi |
 

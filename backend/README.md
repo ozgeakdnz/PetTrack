@@ -4,9 +4,11 @@ Next.js Route Handlers ile REST API — Prisma ORM, PostgreSQL, **Google Gemini*
 
 | | |
 |---|---|
-| **Port** | 1571 |
-| **Stack** | Next.js · TypeScript · Prisma 7 · PostgreSQL |
+| **Port (yerel)** | 1571 |
+| **Canlı** | https://pettrack-backend.vercel.app |
+| **Stack** | Next.js · TypeScript · Prisma 7 · PostgreSQL (Neon) |
 | **AI** | Gemini `gemini-2.5-flash` |
+| **Deploy** | Vercel — root `backend/` · rehber: [`../prodocs/DEPLOY-vercel.md`](../prodocs/DEPLOY-vercel.md) |
 
 ---
 
@@ -27,6 +29,8 @@ AI prompt: `lib/pati-dostu-prompt.ts`
 
 ## Ortam değişkenleri
 
+**Yerel** (`backend/.env`):
+
 ```env
 DATABASE_URL=postgresql://...
 FRONTEND_ORIGIN=http://localhost:1575
@@ -34,6 +38,16 @@ GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
 GEMINI_MAX_DAILY_REQUESTS=15
 GEMINI_THINKING_BUDGET=0
+```
+
+**Canlı (Vercel `pettrack-backend`):**
+
+```env
+DATABASE_URL=postgresql://...@....neon.tech/...
+FRONTEND_ORIGIN=https://pettrack-frontend.vercel.app
+GEMINI_API_KEY=...
+# Profil fotoğrafı için Vercel Blob bağlandıysa otomatik:
+# BLOB_READ_WRITE_TOKEN=...
 ```
 
 ---

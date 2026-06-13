@@ -35,10 +35,16 @@ flutter pub get
 flutter run
 ```
 
-**Fiziksel cihaz:**
+**Fiziksel cihaz (yerel backend):**
 
 ```bash
 flutter run --dart-define=NEXT_API_BASE=http://BILGISAYAR_IP:1571
+```
+
+**Canlı API:**
+
+```bash
+flutter run --dart-define=NEXT_API_BASE=https://pettrack-backend.vercel.app
 ```
 
 ---

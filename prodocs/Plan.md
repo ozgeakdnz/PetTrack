@@ -17,7 +17,7 @@
 | Backend API | Next.js Route Handlers, port 1571 | ✅ |
 | Veritabanı | PostgreSQL + Prisma | ✅ |
 | AI (Gemini) | `/api/chat` — Pati Dostu | ✅ |
-| Canlı deploy | Vercel + Supabase | ⏳ |
+| Canlı deploy | Vercel + Neon PostgreSQL | ✅ |
 
 **Monorepo:** Kök `npm run dev` → backend (1571) + frontend (1575) birlikte.  
 **API bağlantısı:** `frontend/lib/api.ts` → `NEXT_PUBLIC_API_URL` · CORS: `backend/middleware.ts`
@@ -159,12 +159,13 @@
 
 ### Adım 10 — Canlı deploy
 
-- [ ] Supabase / Neon PostgreSQL
-- [ ] Vercel: backend projesi
-- [ ] Vercel: frontend projesi (`NEXT_PUBLIC_API_URL`)
-- [ ] `prisma migrate deploy`
-- [ ] Canlı URL README'ye ekle
-- **Durum:** ⏳ Bekliyor — teslim için kritik
+- [x] Neon PostgreSQL (`pettrack-db`, eu-central-1)
+- [x] Vercel: backend projesi (`pettrack-backend`)
+- [x] Vercel: frontend projesi (`pettrack-frontend`, `NEXT_PUBLIC_API_URL`)
+- [x] `npx prisma db push` (Neon şema)
+- [x] Canlı URL README'ye eklendi
+- [ ] Vercel Blob — profil fotoğrafı (Storage kurulumu)
+- **Bitti:** https://pettrack-frontend.vercel.app · https://pettrack-backend.vercel.app
 
 ---
 

@@ -5,8 +5,8 @@
 | **Proje** | PetTrack |
 | **Aşama** | Faz 1 — MVP (Minimum Uygulanabilir Ürün) |
 | **Platform** | Web (Next.js) + Mobil (Flutter, iOS & Android) |
-| **Durum** | ✅ MVP geliştirildi — canlı deploy bekliyor |
-| **Son güncelleme** | 6 Haziran 2026 |
+| **Durum** | ✅ MVP canlıda — [pettrack-frontend.vercel.app](https://pettrack-frontend.vercel.app) |
+| **Son güncelleme** | 13 Haziran 2026 |
 
 ---
 
@@ -93,7 +93,7 @@ Evcil hayvan sahipleri sağlık bilgilerini dağınık tutuyor: aşı tarihleri 
 | Veritabanı | PostgreSQL + Prisma 7 |
 | Yapay zeka | Google Gemini API |
 | Kimlik (MVP) | `ownerId` string — Faz 2'de JWT / Apple Sign-In |
-| Barındırma (hedef) | Vercel (web + API) + Supabase (DB) |
+| Barındırma | Vercel (web + API) + Neon PostgreSQL |
 
 Detay: [`tech-stack.md`](./tech-stack.md)
 
@@ -247,4 +247,4 @@ Alt navigasyon + `PtHeader` (aktif pet avatarı).
 | Etkileşimli uygulama | ✅ CRUD + DB + web + mobil |
 | LLM API entegrasyonu | ✅ Gemini `/api/chat` |
 | Frontend / Backend ayrımı | ✅ npm workspaces, REST API |
-| Canlı deploy | ⏳ Planlandı (Vercel + Supabase) |
+| Canlı deploy | ✅ [pettrack-frontend.vercel.app](https://pettrack-frontend.vercel.app) |

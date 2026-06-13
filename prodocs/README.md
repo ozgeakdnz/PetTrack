@@ -14,6 +14,7 @@
 | 3 | [**Plan.md**](./Plan.md) | PRD'den türetilen adımlar, user story'ler, tamamlanma durumu |
 | 4 | [**DesignSystem.md**](./DesignSystem.md) | Renk, tipografi, bileşen ve layout kuralları |
 | 5 | [**Progress.md**](./Progress.md) | Tarihli ilerleme günlüğü, kararlar, hatalar |
+| 6 | [**DEPLOY-vercel.md**](./DEPLOY-vercel.md) | Vercel + Neon canlı deploy rehberi |
 
 ---
 
@@ -21,6 +22,7 @@
 
 | Yol | Açıklama |
 |-----|----------|
+| [DEPLOY-vercel.md](./DEPLOY-vercel.md) | Canlı deploy adımları (Vercel + Neon + Blob) |
 | [er-diagram.md](./er-diagram.md) | Veritabanı modeli diyagramı |
 | [agent/rules/](./agent/rules/) | Cursor / AI kodlama kuralları |
 | [agent/commands/](./agent/commands/) | Sık kullanılan geliştirme komutları |
@@ -54,5 +56,8 @@ mobile/ (Flutter) ──┼──► backend/ (1571) ──► PostgreSQL
 | Kaynak | URL |
 |--------|-----|
 | Kök README | [../README.md](../README.md) |
+| Canlı web | https://pettrack-frontend.vercel.app |
+| Canlı API | https://pettrack-backend.vercel.app |
 | Env şablonu | [../.env.example](../.env.example) |
 | Gemini API key | https://aistudio.google.com/apikey |
+| Neon PostgreSQL | https://neon.tech |
