@@ -1,3 +1,5 @@
+import { apiUrl } from "@/lib/api";
+
 export type PetSpecies = "CAT" | "DOG" | "BIRD";
 
 export type PetAvatarSource = {
@@ -19,7 +21,8 @@ export function resolvePetImageSrc(
   if (previewUrl) return previewUrl;
   if (pet?.imageUrl) {
     if (pet.imageUrl.startsWith("http")) return pet.imageUrl;
-    return pet.imageUrl.startsWith("/") ? pet.imageUrl : `/${pet.imageUrl}`;
+    const path = pet.imageUrl.startsWith("/") ? pet.imageUrl : `/${pet.imageUrl}`;
+    return apiUrl(path);
   }
   return SPECIES_FALLBACK_IMAGE[species ?? "CAT"];
 }

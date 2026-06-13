@@ -45,7 +45,9 @@ Yerelde (port 1572) eski yollar da çalışır: `/api/questions/daily`, `/api/en
 | `GEMINI_MODEL` | `gemini-2.5-flash` |
 | `GEMINI_THINKING_BUDGET` | `0` |
 
-6. Deploy sonrası migration:
+6. **Profil fotoğrafları (Blob):** Backend projesinde **Storage → Create Database → Blob** → projeye bağla. Vercel otomatik `BLOB_READ_WRITE_TOKEN` ekler; **Redeploy** gerekir. Blob yoksa `/api/uploads` Vercel'de başarısız olur (salt okunur disk).
+
+7. Deploy sonrası migration:
 
 ```bash
 cd backend

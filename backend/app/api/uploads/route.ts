@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,6 +13,8 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/gif",
   "application/pdf",
 ]);
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export async function POST(req: Request) {
   try {
@@ -26,19 +29,36 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Boş dosya yüklenemez." }, { status: 400 });
     }
 
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "Dosya en fazla 5 MB olabilir." }, { status: 400 });
+    }
+
     if (!ALLOWED_MIME_TYPES.has(file.type)) {
       return NextResponse.json({ error: "Sadece görsel veya PDF yükleyebilirsin." }, { status: 400 });
+    }
+
+    const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+    const safeExt = ext.toLowerCase().replace(/[^a-z0-9.]/g, "");
+    const fileName = `${randomUUID()}${safeExt}`;
+    const bytes = Buffer.from(await file.arrayBuffer());
+
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(`uploads/${fileName}`, bytes, {
+        access: "public",
+        contentType: file.type,
+      });
+
+      return NextResponse.json({
+        fileUrl: blob.url,
+        mimeType: file.type,
+        fileName: file.name,
+      });
     }
 
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadDir, { recursive: true });
 
-    const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-    const safeExt = ext.toLowerCase().replace(/[^a-z0-9.]/g, "");
-    const fileName = `${randomUUID()}${safeExt}`;
     const filePath = path.join(uploadDir, fileName);
-    const bytes = Buffer.from(await file.arrayBuffer());
-
     await writeFile(filePath, bytes);
 
     return NextResponse.json({
@@ -46,7 +66,8 @@ export async function POST(req: Request) {
       mimeType: file.type,
       fileName: file.name,
     });
-  } catch {
+  } catch (error) {
+    console.error("Upload failed:", error);
     return NextResponse.json({ error: "Dosya yükleme başarısız oldu." }, { status: 500 });
   }
 }
