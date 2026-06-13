@@ -314,7 +314,16 @@ export default function PetsPage() {
       const patchRes = await fetch(apiUrl(`/api/pets/${activePet.id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: uploadData.fileUrl }),
+        body: JSON.stringify({
+          name: form.name,
+          breed: form.breed,
+          birthDate: form.birthDate,
+          weight: form.weight,
+          species: form.species,
+          gender: form.gender,
+          ownerId: form.ownerId,
+          imageUrl: uploadData.fileUrl,
+        }),
       });
       const patchData = await readApiResponse<{ pet?: Pet; error?: string }>(patchRes);
 
@@ -327,7 +336,7 @@ export default function PetsPage() {
         if (prev) URL.revokeObjectURL(prev);
         return null;
       });
-      setNotice("Profil resmi güncellendi.");
+      setNotice("Profil resmi başarıyla güncellendi.");
       await refreshPets();
     } catch (err) {
       setImagePreview((prev) => {
